@@ -1,0 +1,8 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Shell-Skripte immer mit LF (sonst auf Linux/Mac nicht ausführbar)
+*.sh text eol=lf
+
+# Snapshot-JSONs byte-deterministisch halten — CRLF-Normalisierung unter Windows vermeiden
+frontend/public/data/*.json text eol=lf

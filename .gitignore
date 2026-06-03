@@ -1,0 +1,16 @@
+.worktrees/
+__pycache__/
+*.pyc
+.pytest_cache/
+node_modules/
+.next/
+*.png
+# PWA home-screen icon is a real source asset (needed by the static build).
+!frontend/src/app/apple-icon.png
+
+# Internal development docs — kept locally, not in the public repo.
+CLAUDE.md
+docs/
+Anforderungskatalog_Event-App.md
+.claude/
+.playwright-mcp/
