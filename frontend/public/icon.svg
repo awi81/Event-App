@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3b82f6"/>
+      <stop offset="100%" stop-color="#1d4ed8"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <!-- Calendar body -->
+  <rect x="96" y="128" width="320" height="288" rx="32" fill="#ffffff" opacity="0.95"/>
+  <rect x="96" y="128" width="320" height="64" rx="32" fill="#1e3a8a"/>
+  <!-- Header dots -->
+  <circle cx="160" cy="112" r="20" fill="#1e3a8a"/>
+  <circle cx="352" cy="112" r="20" fill="#1e3a8a"/>
+  <!-- Map pin in calendar -->
+  <path d="M256 232c-44 0-80 36-80 80 0 60 80 120 80 120s80-60 80-120c0-44-36-80-80-80z" fill="#ef4444"/>
+  <circle cx="256" cy="312" r="28" fill="#ffffff"/>
+</svg>
