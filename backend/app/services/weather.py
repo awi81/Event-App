@@ -106,7 +106,7 @@ async def get_weather_for_date(target_date: date, db=None) -> Optional[dict]:
                 db.commit()
                 return _row_to_dict(row)
         except Exception as e:
-            logger.error(f"Weather API error: {e}")
+            logger.error(f"Weather API error: {e!r}")
             return _row_to_dict(row) if row else None
     finally:
         if own_session:
