@@ -34,6 +34,15 @@ _AUTO_MIGRATIONS: dict[str, dict[str, str]] = {
     },
 }
 
+# Maps table -> {column_name: target VARCHAR length} for columns whose limit was
+# raised in the model. Widening VARCHAR is lossless; only applied when the live
+# column is narrower than the target.
+_AUTO_WIDENINGS: dict[str, dict[str, int]] = {
+    "events": {
+        "price_text": 255,
+    },
+}
+
 
 def _auto_migrate(eng):
     """Add columns that exist in the SQLAlchemy model but not yet in the DB.
@@ -55,6 +64,31 @@ def _auto_migrate(eng):
                 logger.info(f"Auto-migrate: added {table}.{col_name}")
             except Exception as e:
                 logger.warning(f"Auto-migrate failed for {table}.{col_name}: {e}")
+
+    for table, columns in _AUTO_WIDENINGS.items():
+        if not inspector.has_table(table):
+            continue
+        live_cols = {col["name"]: col for col in inspector.get_columns(table)}
+        for col_name, target_len in columns.items():
+            col = live_cols.get(col_name)
+            if col is None:
+                continue
+            current_len = getattr(col["type"], "length", None)
+            if current_len is None or current_len >= target_len:
+                continue
+            try:
+                with eng.begin() as conn:
+                    conn.execute(
+                        text(
+                            f"ALTER TABLE {table} ALTER COLUMN {col_name} "
+                            f"TYPE VARCHAR({target_len})"
+                        )
+                    )
+                logger.info(
+                    f"Auto-migrate: widened {table}.{col_name} to VARCHAR({target_len})"
+                )
+            except Exception as e:
+                logger.warning(f"Auto-migrate widening failed for {table}.{col_name}: {e}")
 
 
 def init_db():

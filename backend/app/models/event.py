@@ -40,7 +40,7 @@ class Event(Base):
     indoor_outdoor = Column(SQLEnum(IndoorOutdoor), default=IndoorOutdoor.unknown)
     kids_suitable = Column(SQLEnum(KidsSuitable), default=KidsSuitable.unknown)
     age_note = Column(String(255), nullable=True)
-    price_text = Column(String(100), nullable=True)
+    price_text = Column(String(255), nullable=True)
     weather_note = Column(String(255), nullable=True)
     image_url = Column(String(500), nullable=True)
     quality_score = Column(Float, default=0.5)
