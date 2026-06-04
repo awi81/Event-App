@@ -79,8 +79,9 @@ def parse_uph_text(text: str) -> List[Dict]:
             if year < 100:
                 year += 2000
 
-            # Extract time
-            time_match = re.search(r'(\d{1,2})[:\.](\d{2})\s*(?:Uhr|h)?', line)
+            # Extract time — mask the date first so "24.06." is not read as 24:06
+            line_wo_date = line[:date_match.start()] + line[date_match.end():]
+            time_match = re.search(r'(\d{1,2})[:\.](\d{2})\s*(?:Uhr|h)?', line_wo_date)
             hour = int(time_match.group(1)) if time_match else 0
             minute = int(time_match.group(2)) if time_match else 0
 
