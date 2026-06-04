@@ -12,10 +12,27 @@ import re
 import unicodedata
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import text, func
+from sqlalchemy import String, text, func
 from sqlalchemy.orm import Session
 
 from app.models.event import Event
+
+# VARCHAR limits from the Event model. Values are clamped before insert/update
+# so a single oversized field (e.g. a long Lichtburg price_text) cannot fail
+# the row with StringDataRightTruncation.
+_STRING_LIMITS: dict[str, int] = {
+    col.name: col.type.length
+    for col in Event.__table__.columns
+    if type(col.type) is String and col.type.length is not None
+}
+
+
+def _clamp_string_fields(event_data: dict) -> None:
+    """Truncate string values that exceed their column's VARCHAR limit."""
+    for key, limit in _STRING_LIMITS.items():
+        value = event_data.get(key)
+        if isinstance(value, str) and len(value) > limit:
+            event_data[key] = value[:limit].rstrip()
 
 _BERLIN = ZoneInfo("Europe/Berlin")
 
@@ -138,6 +155,9 @@ def sync_events_to_db(db: Session, events_data: list[dict], source_name: str) ->
     updated = 0
     merged = 0
 
+    # Commit per event: a failing row only rolls back itself, never the
+    # already-persisted rest of the batch (a shared-transaction rollback once
+    # wiped almost the whole Lichtburg sync because of one oversized field).
     for event_data in unique_events:
         try:
             canonical_id = event_data["canonical_id"]
@@ -148,6 +168,7 @@ def sync_events_to_db(db: Session, events_data: list[dict], source_name: str) ->
                 event_data["title"] = sanitize_title(event_data["title"])
             if "venue_name" in event_data:
                 event_data["venue_name"] = sanitize_title(event_data["venue_name"])
+            _clamp_string_fields(event_data)
 
             existing = db.execute(
                 text("SELECT id FROM events WHERE canonical_id = :cid"),
@@ -169,6 +190,7 @@ def sync_events_to_db(db: Session, events_data: list[dict], source_name: str) ->
                         ),
                         params,
                     )
+                db.commit()
                 updated += 1
                 continue
 
@@ -182,6 +204,7 @@ def sync_events_to_db(db: Session, events_data: list[dict], source_name: str) ->
                 )
                 if changed:
                     db.add(cross)
+                    db.commit()
                     merged += 1
                 continue
 
@@ -199,6 +222,7 @@ def sync_events_to_db(db: Session, events_data: list[dict], source_name: str) ->
                 ),
                 params,
             )
+            db.commit()
             created += 1
         except Exception as e:
             logger.warning(
@@ -212,7 +236,7 @@ def sync_events_to_db(db: Session, events_data: list[dict], source_name: str) ->
             continue
 
     try:
-        db.commit()
+        db.commit()  # close any open read-only transaction
     except Exception as e:
         logger.error(f"Final commit failed for {source_name}: {e}")
         db.rollback()

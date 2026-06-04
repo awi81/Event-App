@@ -165,6 +165,51 @@ class TestSyncEventsToDb:
         assert stats["merged"] == 0
 
 
+class TestSyncErrorIsolation:
+    def test_failing_event_does_not_destroy_batch(self, db_session):
+        """A row that fails to insert must not roll back the rest of the batch.
+
+        Regression: a shared-transaction rollback once wiped almost the whole
+        Lichtburg sync because 8 events had an oversized price_text.
+        """
+        from sqlalchemy import text
+
+        events = [
+            {"canonical_id": "iso_001", "title": "Good Before", "source_name": "Test"},
+            # No title -> violates NOT NULL on insert.
+            {"canonical_id": "iso_002", "source_name": "Test"},
+            {"canonical_id": "iso_003", "title": "Good After", "source_name": "Test"},
+        ]
+        stats = sync_events_to_db(db_session, events, "Test")
+        assert stats["created"] == 2
+
+        rows = db_session.execute(
+            text("SELECT canonical_id FROM events WHERE canonical_id LIKE 'iso_%'")
+        ).fetchall()
+        ids = {r[0] for r in rows}
+        assert ids == {"iso_001", "iso_003"}
+
+    def test_oversized_string_fields_are_clamped(self, db_session):
+        """Values longer than the model's VARCHAR limit are truncated, not dropped.
+
+        Regression: Lichtburg price_text (joined price categories) exceeded
+        VARCHAR(100) and failed with StringDataRightTruncation on PostgreSQL.
+        """
+        events = [{
+            "canonical_id": "clamp_001",
+            "title": "Clamped Event",
+            "price_text": "PK 1 91,90 € / " * 40,  # 600 chars
+            "source_name": "Test",
+        }]
+        stats = sync_events_to_db(db_session, events, "Test")
+        assert stats["created"] == 1
+
+        row = db_session.query(Event).filter(Event.canonical_id == "clamp_001").one()
+        assert row.price_text is not None
+        assert len(row.price_text) <= 255
+        assert row.price_text.startswith("PK 1 91,90 €")
+
+
 class TestTitleNormalization:
     def test_normalizes_umlauts_and_case(self):
         assert _normalize_title("Konzert IM Großen Saal") == "konzert großen saal"
