@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Event, SortMode } from "@/lib/api";
-import { applyClientFilters, ClientFilters } from "@/lib/filterEvents";
+import { applyClientFilters, ClientFilters, permanentOffersHiddenByTimeFilters } from "@/lib/filterEvents";
 import { EventCard } from "./EventCard";
 import { TopPicks } from "./TopPicks";
 import { useFavorites } from "@/lib/favorites";
@@ -164,7 +164,9 @@ export function EventsList({ events }: EventsListProps) {
   const clearFilters = () => setFilters({ ...DEFAULTS, viewMode: filters.viewMode, showMiniMap: filters.showMiniMap });
 
   // The visible list: pure client-side filter + sort replicating the old API.
-  const visibleEvents = useMemo(() => {
+  // permanentExtras: permanent offers that an active date/time filter would hide
+  // from the main list — rendered as a separate "Jederzeit möglich" section.
+  const { visibleEvents, permanentExtras } = useMemo(() => {
     const cf: ClientFilters = {
       dateFilter: filters.dateFilter,
       kidsOnly: filters.kidsOnly,
@@ -178,8 +180,15 @@ export function EventsList({ events }: EventsListProps) {
       favorites,
       search: filters.search,
     };
-    return applyClientFilters(events, cf, now);
+    const visible = applyClientFilters(events, cf, now);
+    const shown = new Set(visible.map((e) => e.canonical_id));
+    const extras = permanentOffersHiddenByTimeFilters(events, cf, now).filter(
+      (e) => !shown.has(e.canonical_id)
+    );
+    return { visibleEvents: visible, permanentExtras: extras };
   }, [events, filters, favorites, now]);
+
+  const [showAllPermanent, setShowAllPermanent] = useState(false);
 
   // Category chips are derived dynamically: only show categories that actually
   // yield events under the *other* active filters (date, time-of-day, location,
@@ -564,7 +573,9 @@ export function EventsList({ events }: EventsListProps) {
                 : filters.search
                 ? `Keine Treffer für „${filters.search}". Versuche einen anderen Begriff.`
                 : filters.dateFilter === "today"
-                ? "Heute ist nichts mehr drin. Schau es dir morgen an oder erweitere den Zeitraum."
+                ? permanentExtras.length > 0
+                  ? "Für heute sind keine terminierten Events mehr drin – unten findest du Dauerangebote, die jederzeit gehen."
+                  : "Heute ist nichts mehr drin. Schau es dir morgen an oder erweitere den Zeitraum."
                 : "Versuche die Filter anzupassen oder erweitere den Zeitraum."}
             </p>
             <div className="mt-4 flex justify-center gap-3 flex-wrap">
@@ -598,6 +609,38 @@ export function EventsList({ events }: EventsListProps) {
           </>
         )}
       </div>
+
+      {/* Permanent offers hidden by the active date/time filter — they are valid
+          any day, so surface them in a clearly separated section. */}
+      {permanentExtras.length > 0 && (
+        <div className="flex flex-col gap-4 border-t border-gray-200 dark:border-slate-700 pt-6">
+          <div>
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
+              <Clock className="h-5 w-5 text-blue-600" />
+              Jederzeit möglich
+              <span className="text-sm font-normal text-gray-500 dark:text-gray-400">
+                ({permanentExtras.length})
+              </span>
+            </h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Dauerangebote ohne festen Termin – unabhängig vom gewählten Zeitraum verfügbar.
+            </p>
+          </div>
+          <div className={`grid gap-4 ${filters.viewMode === "list" ? "grid-cols-1" : "md:grid-cols-2 lg:grid-cols-3"}`}>
+            {(showAllPermanent ? permanentExtras : permanentExtras.slice(0, 6)).map((event) => (
+              <EventCard key={event.canonical_id} event={event} now={now} />
+            ))}
+          </div>
+          {permanentExtras.length > 6 && (
+            <button
+              onClick={() => setShowAllPermanent((v) => !v)}
+              className="self-center rounded-lg px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-700 transition-colors"
+            >
+              {showAllPermanent ? "Weniger anzeigen" : `Alle ${permanentExtras.length} anzeigen`}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
