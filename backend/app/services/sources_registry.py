@@ -26,6 +26,12 @@ from app.services.grend import sync_grend
 from app.services.lichtburg import sync_lichtburg
 from app.services.schatzkammer_werden import sync_schatzkammer_werden
 from app.services.visitessen import sync_visitessen
+from app.services.folkwang_uni import sync_folkwang_uni
+from app.services.kulturloewen import sync_kulturloewen
+from app.services.lwl_industriemuseum import sync_lwl_industriemuseum
+from app.services.messe_essen import sync_messe_essen
+from app.services.ruhrbuehnen import sync_ruhrbuehnen
+from app.services.planetarium_bochum import sync_planetarium_bochum
 
 
 SyncFn = Callable[[Session], Awaitable[int]]
@@ -59,6 +65,12 @@ SOURCES: list[SourceEntry] = [
     SourceEntry("Lichtburg", sync_lichtburg, "https://filmspiegel-essen.de/buehne/", "html"),
     SourceEntry("Schatzkammer Werden", sync_schatzkammer_werden, "https://www.schatzkammer-werden.de/", "html"),
     SourceEntry("visitessen.de", sync_visitessen, "https://pages.visitessen.de/de/visitessen/default/search/Event", "api"),
+    SourceEntry("Folkwang Universität", sync_folkwang_uni, "https://www.folkwang-uni.de/home/hochschule/veranstaltungen/", "html"),
+    SourceEntry("Kulturlöwen Velbert", sync_kulturloewen, "https://www.kulturloewen.de/veranstaltungen/", "html"),
+    SourceEntry("LWL-Industriemuseum", sync_lwl_industriemuseum, "https://henrichshuette.lwl.org/de/veranstaltungen/", "html"),
+    SourceEntry("Messe Essen", sync_messe_essen, "https://www.messe-essen.de/event-kalender/", "html"),
+    SourceEntry("Ruhrbühnen", sync_ruhrbuehnen, "https://www.ruhrbuehnen.de/de/spielplan/", "html"),
+    SourceEntry("Planetarium Bochum", sync_planetarium_bochum, "https://planetarium-bochum.de/de_DE/event.json", "api"),
 ]
 
 
