@@ -7,6 +7,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { CATEGORY_COLORS, DEFAULT_CATEGORY_COLOR } from "@/lib/categories";
 
 // Mount-Guard via useSyncExternalStore - avoids the ESLint
 // react-hooks/set-state-in-effect rule but still defers Leaflet's TileLayer
@@ -20,18 +21,7 @@ function useIsMounted(): boolean {
   return useSyncExternalStore(emptySubscribe, getClientSnapshot, getServerSnapshot);
 }
 
-// Category → color mapping
-const CATEGORY_COLORS: Record<string, string> = {
-  "Familie & Kinder": "#22c55e",       // green
-  "Kultur & Sonstiges": "#a855f7",     // purple
-  "Museum & Ausstellung": "#3b82f6",   // blue
-  "Freizeitorte & Attraktionen": "#f97316", // orange
-  "Food & Street-Food": "#ef4444",     // red
-  "Märkte": "#eab308",                 // yellow
-  "Feste & Festivals": "#ec4899",      // pink
-  "Workshops & Mitmachen": "#8b5cf6",  // violet
-};
-const DEFAULT_COLOR = "#6b7280"; // gray
+const DEFAULT_COLOR = DEFAULT_CATEGORY_COLOR;
 
 function createColoredIcon(color: string): L.DivIcon {
   return L.divIcon({
