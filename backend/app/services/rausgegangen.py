@@ -14,6 +14,18 @@ logger = logging.getLogger(__name__)
 
 RAUSGEGANGEN_BASE = "https://rausgegangen.de"
 
+# rausgegangen.de (BunnyCDN) answers 403 to anything that does not look like a
+# full desktop browser: the bare "Mozilla/5.0 (...) AppleWebKit/537.36" UA,
+# python-httpx and Playwright's default Linux "HeadlessChrome" all get blocked
+# — which silently killed the source on GitHub Actions for weeks. A complete
+# Windows-Chrome UA string passes (verified 2026-09-18).
+_BROWSER_UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/128.0.0.0 Safari/537.36"
+)
+_HTTP_HEADERS = {"User-Agent": _BROWSER_UA, "Accept-Language": "de-DE,de;q=0.9"}
+
 async def fetch_rausgegangen_events(city: str = "essen") -> List[Dict]:
     """Fetch events from Rausgegangen website using Playwright."""
     try:
@@ -36,7 +48,7 @@ async def fetch_with_playwright(city: str) -> List[Dict]:
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
-        page = await browser.new_page()
+        page = await browser.new_page(user_agent=_BROWSER_UA, locale="de-DE")
 
         try:
             # 'domcontentloaded' instead of 'networkidle' — rausgegangen.de
@@ -177,9 +189,9 @@ async def fetch_with_http(city: str) -> List[Dict]:
     """Fallback: Fetch events using HTTP (static HTML)."""
     url = f"{RAUSGEGANGEN_BASE}/{city}/"
 
-    async with httpx.AsyncClient(timeout=30.0, follow_redirects=True, headers={
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-    }) as client:
+    async with httpx.AsyncClient(
+        timeout=30.0, follow_redirects=True, headers=_HTTP_HEADERS
+    ) as client:
         try:
             response = await client.get(url)
             response.raise_for_status()
@@ -657,9 +669,9 @@ async def enrich_events_from_detail_pages(events: List[Dict], max_fetches: int =
     import asyncio
 
     enriched = 0
-    async with httpx.AsyncClient(timeout=15.0, follow_redirects=True, headers={
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-    }) as client:
+    async with httpx.AsyncClient(
+        timeout=15.0, follow_redirects=True, headers=_HTTP_HEADERS
+    ) as client:
         for event in events:
             if enriched >= max_fetches:
                 break
