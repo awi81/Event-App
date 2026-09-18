@@ -25,6 +25,7 @@ from app.services.zeche_carl import sync_zeche_carl
 from app.services.grend import sync_grend
 from app.services.lichtburg import sync_lichtburg
 from app.services.schatzkammer_werden import sync_schatzkammer_werden
+from app.services.visitessen import sync_visitessen
 
 
 SyncFn = Callable[[Session], Awaitable[int]]
@@ -57,6 +58,7 @@ SOURCES: list[SourceEntry] = [
     SourceEntry("GREND", sync_grend, "https://grend.de/", "html"),
     SourceEntry("Lichtburg", sync_lichtburg, "https://filmspiegel-essen.de/buehne/", "html"),
     SourceEntry("Schatzkammer Werden", sync_schatzkammer_werden, "https://www.schatzkammer-werden.de/", "html"),
+    SourceEntry("visitessen.de", sync_visitessen, "https://pages.visitessen.de/de/visitessen/default/search/Event", "api"),
 ]
 
 
