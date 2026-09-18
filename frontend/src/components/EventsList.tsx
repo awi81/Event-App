@@ -8,6 +8,7 @@ import { applyClientFilters, ClientFilters, permanentOffersHiddenByTimeFilters }
 import { EventCard } from "./EventCard";
 import { TopPicks } from "./TopPicks";
 import { useFavorites } from "@/lib/favorites";
+import { sortCategories } from "@/lib/categories";
 import {
   Calendar,
   Home,
@@ -215,7 +216,7 @@ export function EventsList({ events }: EventsListProps) {
     // Keep the active selection visible regardless of the other filters.
     if (filters.categoryFilter !== "all") cats.add(filters.categoryFilter);
     filters.excludedCategories.forEach((c) => cats.add(c));
-    return Array.from(cats).sort();
+    return sortCategories(cats);
   }, [events, filters, favorites, now]);
 
   const hasActiveFilters =

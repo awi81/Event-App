@@ -1,5 +1,10 @@
 """Tests for the event classification service."""
-from app.services.classifier import classify_event, apply_classification
+from app.services.classifier import (
+    CANONICAL_CATEGORIES,
+    apply_classification,
+    classify_event,
+    normalize_category,
+)
 
 
 class TestClassifyEvent:
@@ -11,7 +16,7 @@ class TestClassifyEvent:
     def test_classifies_music_event(self):
         event = {"title": "Jazz Konzert", "short_description": "Live Musik", "source_name": "", "venue_name": ""}
         category, _, _ = classify_event(event)
-        assert category == "Kultur & Sonstiges"
+        assert category == "Musik & Konzerte"
 
     def test_classifies_sport_event(self):
         event = {"title": "Yoga im Park", "short_description": "", "source_name": "", "venue_name": ""}
@@ -21,7 +26,7 @@ class TestClassifyEvent:
     def test_classifies_market(self):
         event = {"title": "Ostermarkt in Werden", "short_description": "", "source_name": "", "venue_name": ""}
         category, _, _ = classify_event(event)
-        assert category == "Märkte"
+        assert category == "Märkte & Messen"
 
     def test_classifies_indoor_by_venue(self):
         event = {"title": "Event", "short_description": "", "source_name": "", "venue_name": "Museum Folkwang"}
@@ -60,21 +65,44 @@ class TestClassifyEvent:
 
 
 class TestApplyClassification:
-    def test_does_not_overwrite_existing_category(self):
+    def test_normalises_raw_source_category(self):
+        # Raw source labels must never survive — the chip row would explode.
+        event = {
+            "title": "Woyzeck",
+            "short_description": "",
+            "source_name": "",
+            "venue_name": "",
+            "category": "Schauspiel",
+        }
+        result = apply_classification(event)
+        assert result["category"] == "Theater & Bühne"
+
+    def test_keeps_canonical_category(self):
         event = {
             "title": "Konzert",
             "short_description": "Musik live",
             "source_name": "",
             "venue_name": "",
-            "category": "Spezial",
+            "category": "Familie & Kinder",
         }
         result = apply_classification(event)
-        assert result["category"] == "Spezial"
+        assert result["category"] == "Familie & Kinder"
+
+    def test_unknown_raw_label_falls_back_to_title(self):
+        event = {
+            "title": "Techno-Party",
+            "short_description": "",
+            "source_name": "",
+            "venue_name": "",
+            "category": "Halle 8",
+        }
+        result = apply_classification(event)
+        assert result["category"] == "Feste & Festivals"
 
     def test_sets_category_when_missing(self):
         event = {"title": "Konzert", "short_description": "live musik", "source_name": "", "venue_name": ""}
         result = apply_classification(event)
-        assert result["category"] == "Kultur & Sonstiges"
+        assert result["category"] == "Musik & Konzerte"
 
     def test_sets_kids_from_source(self):
         event = {"title": "Event", "short_description": "", "source_name": "Ruhrpott-Kids", "venue_name": ""}
@@ -109,3 +137,42 @@ class TestApplyClassification:
         # Original keys are preserved
         assert "title" in result
         assert "short_description" in result
+
+
+class TestNormalizeCategory:
+    """The canonical taxonomy is what the frontend chips are built from."""
+
+    def test_every_canonical_name_maps_to_itself(self):
+        for name in CANONICAL_CATEGORIES:
+            assert normalize_category(name) == name
+
+    def test_raw_labels_from_sources(self):
+        cases = {
+            "Kabarett & Co.": "Comedy & Kabarett",
+            "Musical & Musiktheater": "Theater & Bühne",
+            "Eigenproduktion": "Theater & Bühne",
+            "Kinder- und Jugendtheater": "Familie & Kinder",
+            "Tagesfahrten für Kinder": "Familie & Kinder",
+            "Vortrag/Lesung": "Literatur & Vorträge",
+            "Zollverein-Führungen": "Führungen & Touren",
+            "Ruhr Museum": "Museum & Ausstellung",
+            "Party/Nightlife": "Feste & Festivals",
+            "Festival/Open-Air": "Feste & Festivals",
+            "Weihnachtsmarkt": "Märkte & Messen",
+            "Messe": "Märkte & Messen",
+            "musik": "Musik & Konzerte",
+            "Sportangebote": "Freizeitorte & Attraktionen",
+        }
+        for raw, expected in cases.items():
+            assert normalize_category(raw) == expected, raw
+
+    def test_word_boundaries_avoid_false_positives(self):
+        assert normalize_category(None, "Kooperation Ruhr") is None
+        assert normalize_category(None, "Manifest der Zukunft") is None
+        assert normalize_category(None, "Oper: Carmen") == "Theater & Bühne"
+
+    def test_kids_win_over_theater(self):
+        assert normalize_category("Schauspiel", "Kindertheater: Der Räuber Hotzenplotz") == "Familie & Kinder"
+
+    def test_returns_none_when_nothing_fits(self):
+        assert normalize_category("Halle 8", "Vorstellung") is None

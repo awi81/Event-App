@@ -416,7 +416,9 @@ def _apply_classification_to_all(db: Session) -> int:
         event_data = apply_classification(event_data)
 
         changed = False
-        if event_data.get("category") and not event.category:
+        # Category is re-normalised every run: sources write their raw label
+        # ("Schauspiel", "Halle 8") on each sync, the taxonomy wins afterwards.
+        if event_data.get("category") and event_data["category"] != event.category:
             event.category = event_data["category"]
             changed = True
         if event_data.get("indoor_outdoor") and event.indoor_outdoor in (None, IndoorOutdoor.unknown):
