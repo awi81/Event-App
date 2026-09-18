@@ -14,6 +14,7 @@ export const CATEGORY_ORDER: string[] = [
   "Food & Street-Food",
   "Workshops & Mitmachen",
   "Freizeitorte & Attraktionen",
+  "Sonstiges",
 ];
 
 export const CATEGORY_COLORS: Record<string, string> = {
@@ -30,6 +31,7 @@ export const CATEGORY_COLORS: Record<string, string> = {
   "Food & Street-Food": "#ef4444", // red
   "Workshops & Mitmachen": "#8b5cf6", // violet
   "Freizeitorte & Attraktionen": "#f97316", // orange
+  Sonstiges: "#6b7280", // gray
 };
 
 export const DEFAULT_CATEGORY_COLOR = "#6b7280"; // gray

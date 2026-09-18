@@ -174,5 +174,9 @@ class TestNormalizeCategory:
     def test_kids_win_over_theater(self):
         assert normalize_category("Schauspiel", "Kindertheater: Der Räuber Hotzenplotz") == "Familie & Kinder"
 
-    def test_returns_none_when_nothing_fits(self):
-        assert normalize_category("Halle 8", "Vorstellung") is None
+    def test_unmappable_raw_label_becomes_sonstiges(self):
+        assert normalize_category("Halle 8", "Vorstellung") == "Sonstiges"
+        assert normalize_category("Stiftung Zollverein", "Jahresempfang") == "Sonstiges"
+
+    def test_returns_none_without_raw_label_when_nothing_fits(self):
+        assert normalize_category(None, "Vorstellung") is None
