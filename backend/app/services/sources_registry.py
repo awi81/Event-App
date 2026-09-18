@@ -32,6 +32,8 @@ from app.services.lwl_industriemuseum import sync_lwl_industriemuseum
 from app.services.messe_essen import sync_messe_essen
 from app.services.ruhrbuehnen import sync_ruhrbuehnen
 from app.services.planetarium_bochum import sync_planetarium_bochum
+from app.services.katakomben import sync_katakomben
+from app.services.weststadthalle import sync_weststadthalle
 
 
 SyncFn = Callable[[Session], Awaitable[int]]
@@ -71,6 +73,8 @@ SOURCES: list[SourceEntry] = [
     SourceEntry("Messe Essen", sync_messe_essen, "https://www.messe-essen.de/event-kalender/", "html"),
     SourceEntry("Ruhrbühnen", sync_ruhrbuehnen, "https://www.ruhrbuehnen.de/de/spielplan/", "html"),
     SourceEntry("Planetarium Bochum", sync_planetarium_bochum, "https://planetarium-bochum.de/de_DE/event.json", "api"),
+    SourceEntry("Katakomben-Theater", sync_katakomben, "http://www.katakomben-theater.de/", "html"),
+    SourceEntry("Weststadthalle", sync_weststadthalle, "https://www.weststadthalle.de/veranstaltungen/", "html"),
 ]
 
 

@@ -25,7 +25,7 @@ KNOWN_VENUES = {
     "studio-bühne": {"lat": 51.4651, "lon": 7.0962, "address": "Studio-Bühne Essen, Korumhöhe 11, 45307 Essen-Kray"},
     "studio bühne": {"lat": 51.4651, "lon": 7.0962, "address": "Studio-Bühne Essen, Korumhöhe 11, 45307 Essen-Kray"},
     "studio-buehne": {"lat": 51.4651, "lon": 7.0962, "address": "Studio-Bühne Essen, Korumhöhe 11, 45307 Essen-Kray"},
-    "weststadthalle": {"lat": 51.4438, "lon": 7.0632, "address": "Weststadthalle, Bebelplatz 1, 45128 Essen"},
+    "weststadthalle": {"lat": 51.4581, "lon": 7.0027, "address": "Weststadthalle, Thea-Leymann-Straße 23, 45127 Essen"},
     "philharmonie": {"lat": 51.4516, "lon": 7.0133, "address": "Philharmonie Essen, Huyssenallee 41, 45128 Essen"},
     "goethebunker": {"lat": 51.4567, "lon": 7.0098, "address": "Goethebunker, 45128 Essen"},
     "turock": {"lat": 51.4615, "lon": 7.0138, "address": "Turock, Viehofer Platz 3, 45127 Essen"},
