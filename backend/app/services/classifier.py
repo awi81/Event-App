@@ -83,7 +83,12 @@ CATEGORY_RULES: List[Tuple[str, List[str]]] = [
     ]),
 ]
 
-CANONICAL_CATEGORIES: List[str] = [name for name, _ in CATEGORY_RULES]
+# Bucket for events whose source did label them, but with something no rule
+# understands ("Stiftung Zollverein", "Halle 8"). Keeps raw labels off the chips
+# while still letting the user hide the leftovers.
+FALLBACK_CATEGORY = "Sonstiges"
+
+CANONICAL_CATEGORIES: List[str] = [name for name, _ in CATEGORY_RULES] + [FALLBACK_CATEGORY]
 
 _COMPILED_RULES: List[Tuple[str, "re.Pattern[str]"]] = [
     (name, re.compile("|".join(patterns), re.IGNORECASE)) for name, patterns in CATEGORY_RULES
@@ -112,7 +117,8 @@ def normalize_category(
     """Map whatever a source calls its category onto the canonical taxonomy.
 
     Signal order: the raw label (strongest), then the title, then description
-    and venue. Returns None when nothing fits — better no chip than a wrong one.
+    and venue. A raw label that fits nothing becomes "Sonstiges"; with no raw
+    label at all the result is None — better no chip than a wrong one.
     """
     raw = (raw_category or "").strip()
     if raw in CANONICAL_CATEGORIES:
@@ -126,7 +132,7 @@ def normalize_category(
         match = _match_category(text.lower() if text else "")
         if match:
             return match
-    return None
+    return FALLBACK_CATEGORY if raw else None
 
 
 # Indoor/Outdoor keywords
