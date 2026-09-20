@@ -146,3 +146,20 @@ def test_purge_respects_custom_retention(db_session):
     remaining = {e.canonical_id for e in db_session.query(Event).all()}
     assert "p_keep" in remaining
     assert "p_drop" not in remaining
+
+
+def test_purge_broken_titles_removes_venue_and_label_titles(db_session):
+    # Rausgegangen text extractor sometimes promotes a venue header or ad label.
+    _add(db_session, "venue_001", title="UNESCO-WELTERBE ZOLLVEREIN | ESSEN")
+    _add(db_session, "venue_002", title="Sponsored", venue_name="Waste Me")
+    _add(db_session, "venue_003", title="Zeche Carl", venue_name="Zeche Carl")
+    _add(db_session, "venue_004", title="Zollverein, Essen", venue_name=None)
+    _add(db_session, "ok_003", title="Sommerfest UNESCO-Welterbe Zollverein", venue_name="Zollverein")
+    _add(db_session, "ok_004", title="Zeche Carl Open Air", venue_name="Zeche Carl")
+    db_session.commit()
+
+    deleted = purge_broken_titles(db_session)
+    assert deleted == 4
+
+    remaining = {e.canonical_id for e in db_session.query(Event).all()}
+    assert remaining == {"ok_003", "ok_004"}

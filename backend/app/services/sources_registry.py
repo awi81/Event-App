@@ -11,7 +11,7 @@ from app.services.zollverein import sync_zollverein
 from app.services.ruhrpott_kids import sync_ruhrpott_kids
 from app.services.wasgehtapp import sync_wasgehtapp
 from app.services.grugapark import sync_grugapark
-from app.services.borbeck import sync_borbeck
+from app.services.borbeck import sync_borbeck  # noqa: F401  (deactivated, see below)
 from app.services.gasometer import sync_gasometer
 from app.services.unperfekthaus import sync_unperfekthaus
 from app.services.theater_essen import sync_theater_essen
@@ -52,7 +52,11 @@ SOURCES: list[SourceEntry] = [
     SourceEntry("Ruhrpott-Kids", sync_ruhrpott_kids, "https://ruhrpottkids.com/", "rss"),
     SourceEntry("wasgehtapp", sync_wasgehtapp, "https://www.wasgehtapp.de/", "playwright"),
     SourceEntry("Grugapark", sync_grugapark, "https://www.grugapark.de/", "html"),
-    SourceEntry("borbeck.de", sync_borbeck, "https://www.borbeck.de/", "rss"),
+    # borbeck.de deactivated 2026-09-20: the RSS feed is local news (sports
+    # results, business notes) without dates or categories, not events. It
+    # produced 15 fake "Dauerangebote". Module kept in case a real event feed
+    # appears.
+    # SourceEntry("borbeck.de", sync_borbeck, "https://www.borbeck.de/", "rss"),
     SourceEntry("Gasometer", sync_gasometer, "https://www.gasometer.de/", "playwright"),
     SourceEntry("Unperfekthaus", sync_unperfekthaus, "https://www.unperfekthaus.de/", "playwright"),
     SourceEntry("Theater Essen", sync_theater_essen, "https://www.theater-essen.de/", "playwright"),

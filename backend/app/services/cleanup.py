@@ -81,9 +81,30 @@ _BROKEN_TITLE_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Rausgegangen's text extractor sometimes promotes a venue header or an ad
+# label to the title ("UNESCO-WELTERBE ZOLLVEREIN | ESSEN", "Sponsored").
+_LABEL_TITLE_RE = re.compile(r"^(?:sponsored|anzeige|tagestipp|verlosung)$", re.IGNORECASE)
+_VENUE_HEADER_RE = re.compile(r"^[A-ZÄÖÜ0-9 .,&'\-]+\|\s*ESSEN$")
+
+
+def _is_broken_title(title: str | None, venue_name: str | None) -> bool:
+    t = (title or "").strip()
+    if not t:
+        return True
+    if _BROKEN_TITLE_RE.search(t) or _LABEL_TITLE_RE.search(t) or _VENUE_HEADER_RE.search(t):
+        return True
+    # Title is just a venue again ("Salzlager, UNESCO-Welterbe Zollverein",
+    # "Kreuzeskirche, Essen") — either this event's own venue or a known one.
+    tl = re.sub(r",?\s*essen$", "", t.lower()).strip()
+    v = (venue_name or "").strip().lower()
+    if v and tl == v:
+        return True
+    from app.services.known_venues import KNOWN_VENUES  # local import: no cycle
+    return tl in KNOWN_VENUES
+
 
 def purge_broken_titles(db: Session | None = None) -> int:
-    """Delete events whose title still looks like a leftover date header."""
+    """Delete events whose title is a leftover date header, ad label or venue."""
     close_after = False
     if db is None:
         if db_base.SessionLocal is None:
@@ -99,7 +120,7 @@ def purge_broken_titles(db: Session | None = None) -> int:
         # short-list missed digit-prefixed titles like "5Di, 12. Mai | ...".
         candidates = db.query(Event).all()
         broken_ids = [
-            c.id for c in candidates if _BROKEN_TITLE_RE.search(c.title or "")
+            c.id for c in candidates if _is_broken_title(c.title, c.venue_name)
         ]
         if not broken_ids:
             return 0

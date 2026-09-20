@@ -53,10 +53,10 @@ class TestClassifyEvent:
         _, indoor_outdoor, _ = classify_event(event)
         assert indoor_outdoor == "outdoor"
 
-    def test_unknown_event_returns_none_category(self):
-        event = {"title": "Sonstiges", "short_description": "", "source_name": "", "venue_name": ""}
+    def test_unknown_event_lands_in_sonstiges(self):
+        event = {"title": "Vorstellung", "short_description": "", "source_name": "", "venue_name": ""}
         category, _, _ = classify_event(event)
-        assert category is None
+        assert category == "Sonstiges"
 
     def test_kids_suitable_none_for_non_ruhrpott_source(self):
         event = {"title": "Konzert", "short_description": "", "source_name": "Rausgegangen", "venue_name": ""}
@@ -167,9 +167,10 @@ class TestNormalizeCategory:
             assert normalize_category(raw) == expected, raw
 
     def test_word_boundaries_avoid_false_positives(self):
-        assert normalize_category(None, "Kooperation Ruhr") is None
-        assert normalize_category(None, "Manifest der Zukunft") is None
+        assert normalize_category(None, "Kooperation Ruhr") == "Sonstiges"
+        assert normalize_category(None, "Manifest der Zukunft") == "Sonstiges"
         assert normalize_category(None, "Oper: Carmen") == "Theater & Bühne"
+        assert normalize_category(None, "Exkursion ins Grüne") == "Führungen & Touren"
 
     def test_kids_win_over_theater(self):
         assert normalize_category("Schauspiel", "Kindertheater: Der Räuber Hotzenplotz") == "Familie & Kinder"
@@ -178,5 +179,20 @@ class TestNormalizeCategory:
         assert normalize_category("Halle 8", "Vorstellung") == "Sonstiges"
         assert normalize_category("Stiftung Zollverein", "Jahresempfang") == "Sonstiges"
 
-    def test_returns_none_without_raw_label_when_nothing_fits(self):
-        assert normalize_category(None, "Vorstellung") is None
+    def test_sonstiges_without_raw_label_when_nothing_fits(self):
+        assert normalize_category(None, "Vorstellung") == "Sonstiges"
+
+    def test_venue_default_beats_source_default(self):
+        assert normalize_category(None, "ENTERTAINMENT", venue="Alfried Krupp Saal", source_name="Theater Essen") == "Musik & Konzerte"
+        assert normalize_category(None, "Doc Caro", venue="Lichtburg", source_name="Rausgegangen") == "Theater & Bühne"
+        assert normalize_category(None, "LipSync 4 Your Shot", venue="DIVINE Bar") == "Feste & Festivals"
+
+    def test_source_default_is_last_resort(self):
+        assert normalize_category(None, "FELIX MILDENBERGER", source_name="Theater Essen") == "Theater & Bühne"
+        assert normalize_category(None, "Auch Idole bekommen weiche Knie", source_name="Ruhrpott-Kids") == "Familie & Kinder"
+        assert normalize_category(None, "Irgendwas", source_name="Unbekannte Quelle") == "Sonstiges"
+
+    def test_title_keywords_beat_venue_default(self):
+        assert normalize_category(None, "Salsa Anfängerkurs", venue="Villa Rü") == "Workshops & Mitmachen"
+        assert normalize_category(None, "GRENDSLAM Nr. 60", venue="GREND Kulturzentrum") == "Literatur & Vorträge"
+        assert normalize_category(None, "Jubiläums Improshow", venue="GREND") == "Comedy & Kabarett"
