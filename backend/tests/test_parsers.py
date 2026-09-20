@@ -282,54 +282,132 @@ Goethebunker
 
 
 # ──────────────────────────────── Zollverein ────────────────────────────────
+#
+# The upstream events.zollverein.de/api/v1/ API 403s on every request (an
+# application-level auth gate, confirmed independent of headers). The real
+# integration point is the same-origin Nuxt/Nitro route the kalender page
+# itself calls: GET /kalender/api/events/{yyyymmdd}. Fixtures below are
+# shaped like that route's actual (verified live) response.
 
 
-def test_zollverein_api_parses_event_list():
-    data = {
-        "events": [
+def _zollverein_day_fixture():
+    return {
+        "date": "2026-04-20",
+        "next_occurrence": "2026-04-21",
+        "data": [
             {
-                "title": "Industriekultur Führung",
-                "url": "/event/123",
-                "startDate": "2026-04-20T14:00:00",
-                "description": "Geführter Rundgang durch das UNESCO-Welterbe.",
-                "location": {"name": "Zollverein Areal A"},
-                "category": "Führung",
+                "type": "events",
+                "id": "abc-123",
+                "attributes": {
+                    "title": "Industriekultur Führung",
+                    "slug": "industriekultur-fuehrung",
+                    "url": "https://www.zollverein.de/kalender/industriekultur-fuehrung",
+                    "image": {"url": "https://zollverein.imgix.net/abc-123/cover.jpeg"},
+                },
+                "recurring": True,
+                "recurrence": {"next": "2026-04-21"},
+                "times": [{"all_day": False, "start": "14:00", "end": "16:00", "open_end": False}],
+                "content": {
+                    "excerpt": {"text": "Geführter Rundgang durch das UNESCO-Welterbe."},
+                },
+                "terms": [
+                    {"type": "terms", "id": "t1", "attributes": {"title": "Familien", "slug": "kinder-und-familien"}},
+                ],
+                "location": {
+                    "type": "locations",
+                    "id": "loc-1",
+                    "attributes": {"title": "Zollverein Areal A", "slug": "areal-a"},
+                },
+                "category": {
+                    "type": "categories",
+                    "id": "cat-1",
+                    "attributes": {"title": "Führung", "slug": "fuehrung"},
+                },
             }
-        ]
+        ],
     }
-    events = parse_zollverein_api(data)
+
+
+def test_zollverein_api_parses_day_response():
+    data = _zollverein_day_fixture()
+    events = parse_zollverein_api(data, date(2026, 4, 20))
     assert len(events) == 1
     e = events[0]
     assert e["title"] == "Industriekultur Führung"
     assert e["source_url"].startswith("https://www.zollverein.de")
-    assert e["start_at"] is not None
+    assert e["start_at"] == datetime(2026, 4, 20, 14, 0)
+    assert e["end_at"] == datetime(2026, 4, 20, 16, 0)
     assert e["category"] == "Führung"
+    assert e["venue_name"] == "Zollverein Areal A"
+    assert e["kids_suitable"] == "yes"
+    assert e["image_url"].startswith("https://zollverein.imgix.net")
+    assert e["lat"] is not None and e["lon"] is not None
+
+
+def test_zollverein_api_empty_day_returns_no_events():
+    assert parse_zollverein_api({"date": "2026-04-20", "data": []}, date(2026, 4, 20)) == []
 
 
 def test_zollverein_convert_skips_event_without_title():
-    assert convert_zollverein_event({"description": "x"}) is None
+    assert convert_zollverein_event({"attributes": {}}, date(2026, 4, 20)) is None
 
 
-def test_zollverein_date_handles_iso_and_z_suffix():
-    assert parse_zollverein_date("2026-05-01T19:00:00Z") is not None
-    assert parse_zollverein_date("2026-05-01") is not None
+def test_zollverein_convert_canonical_id_includes_date():
+    item = _zollverein_day_fixture()["data"][0]
+    e1 = convert_zollverein_event(item, date(2026, 4, 20))
+    e2 = convert_zollverein_event(item, date(2026, 4, 21))
+    assert e1["canonical_id"] != e2["canonical_id"]
+
+
+def test_zollverein_convert_kids_suitable_no_for_adults_only():
+    item = _zollverein_day_fixture()["data"][0]
+    item = {**item, "terms": [{"attributes": {"title": "Erwachsene", "slug": "erwachsee"}}]}
+    e = convert_zollverein_event(item, date(2026, 4, 20))
+    assert e["kids_suitable"] == "no"
+
+
+def test_zollverein_date_combines_date_and_time():
+    assert parse_zollverein_date("2026-05-01", "17:30") == datetime(2026, 5, 1, 17, 30)
+    assert parse_zollverein_date("2026-05-01") == datetime(2026, 5, 1, 0, 0)
     assert parse_zollverein_date(None) is None
+
+
+def test_zollverein_date_returns_naive():
+    result = parse_zollverein_date("2026-05-01", "17:00")
+    assert result is not None
+    assert result.tzinfo is None
 
 
 def test_zollverein_html_fallback_extracts_event():
     html = """
     <html><body>
-      <li class="mb-4">
-        <h3><a href="/event/abc">Ausstellung Bergbau</a></h3>
-        <p>20.05.2026</p>
-        <p>Eine Ausstellung über den Bergbau im Ruhrgebiet.</p>
-      </li>
+      <ul>
+        <li class="mb-8 lg:mb-12">
+          <h2 class="sr-only"><span class="sr-only">Veranstaltungen am Montag, Mai 20, 2026</span></h2>
+          <ul>
+            <li class="mb-4">
+              <div role="button">
+                <div aria-label="Kategorie Ausstellung" class="inline-block">Kategorie</div>
+                <span class="sr-only">Veranstaltungszeitraum 10:00 - 18:00 Uhr</span>
+                <div class="uppercase tracking-widest">Ruhr Museum</div>
+                <h3><a href="/event/abc">Ausstellung Bergbau</a></h3>
+                <p class="text-gray-700">Eine Ausstellung über den Bergbau im Ruhrgebiet.</p>
+              </div>
+            </li>
+          </ul>
+        </li>
+      </ul>
     </body></html>
     """
     events = parse_zollverein_html(html)
     assert len(events) == 1
-    assert events[0]["title"] == "Ausstellung Bergbau"
-    assert events[0]["lat"] is not None  # known venue
+    e = events[0]
+    assert e["title"] == "Ausstellung Bergbau"
+    assert e["lat"] is not None  # Zollverein-wide fallback coords
+    assert e["venue_name"] == "Ruhr Museum"
+    assert e["category"] == "Ausstellung"
+    assert e["start_at"] == datetime(2026, 5, 20, 10, 0)
+    assert e["end_at"] == datetime(2026, 5, 20, 18, 0)
 
 
 # ──────────────────────────────── Gasometer ─────────────────────────────────
@@ -637,17 +715,24 @@ def test_to_berlin_naive_handles_none():
     assert to_berlin_naive(None) is None
 
 
-def test_zollverein_date_returns_naive():
-    from app.services.zollverein import parse_zollverein_date
-    result = parse_zollverein_date("2026-05-01T17:00:00Z")
-    assert result is not None
-    assert result.tzinfo is None
-    # UTC 17:00 → Berlin CEST 19:00
-    assert result.hour == 19
-
-
 def test_rausgegangen_iso_date_returns_naive():
     from app.services.rausgegangen import parse_iso_date
     result = parse_iso_date("2026-06-01T17:00:00Z")
     assert result is not None
     assert result.tzinfo is None
+
+
+def test_zollverein_cap_occurrences_limits_daily_exhibitions():
+    from datetime import datetime as _dt, timedelta as _td
+
+    from app.services.zollverein import cap_occurrences
+
+    base = _dt(2026, 9, 20, 10, 0)
+    daily = [
+        {"title": "Dauerausstellung", "source_url": "https://z/a", "start_at": base + _td(days=i)}
+        for i in range(120)
+    ]
+    single = [{"title": "Konzert", "source_url": "https://z/b", "start_at": base}]
+    kept = cap_occurrences(daily + single, limit=60)
+    assert len(kept) == 61
+    assert max(e["start_at"] for e in kept if e["source_url"] == "https://z/a") == base + _td(days=59)
