@@ -62,3 +62,35 @@ def test_negative_ttl_shorter_than_positive(db_session):
     db_session.commit()
 
     assert get_cached_geocode(db_session, "Old miss") is None
+
+
+def test_export_import_roundtrip_keeps_fresh_entries(db_session):
+    from datetime import datetime, timedelta, timezone
+
+    from app.models.cache import GeocodeCache
+    from app.services.geocode_cache import export_cache, import_cache, store_geocode
+
+    store_geocode(db_session, "Zeche Carl|Essen", 51.47, 7.01)
+    store_geocode(db_session, "Nirgendwo|Essen", None, None)
+    # An expired positive entry must not travel into the snapshot.
+    db_session.add(
+        GeocodeCache(
+            query="alt|essen", lat=1.0, lon=2.0,
+            fetched_at=datetime.now(timezone.utc) - timedelta(days=200),
+        )
+    )
+    db_session.commit()
+
+    rows = export_cache(db_session)
+    assert [r["query"] for r in rows] == ["nirgendwo|essen", "zeche carl|essen"]
+
+    db_session.query(GeocodeCache).delete()
+    db_session.commit()
+    assert import_cache(db_session, rows) == 2
+    assert import_cache(db_session, rows) == 0  # idempotent
+    assert import_cache(db_session, [{"query": "kaputt", "fetched_at": "nope"}]) == 0
+
+    from app.services.geocode_cache import get_cached_geocode
+
+    assert get_cached_geocode(db_session, "Zeche Carl|Essen") == (51.47, 7.01)
+    assert get_cached_geocode(db_session, "Nirgendwo|Essen") == (None, None)

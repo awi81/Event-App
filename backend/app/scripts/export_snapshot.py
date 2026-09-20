@@ -48,6 +48,35 @@ from zoneinfo import ZoneInfo
 
 logger = logging.getLogger("export_snapshot")
 
+# Committed next to events.json so the fresh Actions DB inherits last run's
+# venue coordinates (see geocode_cache.export_cache).
+GEOCODE_CACHE_FILE = "geocode_cache.json"
+
+
+def _import_geocode_cache(db, path: Path) -> int:
+    if not path.exists():
+        return 0
+    from app.services.geocode_cache import import_cache
+
+    try:
+        rows = json.loads(path.read_text(encoding="utf-8")).get("entries", [])
+        inserted = import_cache(db, rows)
+        logger.info("Geocode cache warmed with %d entries from %s", inserted, path.name)
+        return inserted
+    except Exception as e:  # a broken cache file must never stop the crawl
+        logger.warning("Geocode cache import failed (%s): %s", path.name, e)
+        return 0
+
+
+def _export_geocode_cache(db) -> list[dict]:
+    from app.services.geocode_cache import export_cache
+
+    try:
+        return export_cache(db)
+    except Exception as e:
+        logger.warning("Geocode cache export failed: %s", e)
+        return []
+
 BERLIN = ZoneInfo("Europe/Berlin")
 
 # .../backend/app/scripts/export_snapshot.py -> parents[3] == repo root
@@ -155,6 +184,7 @@ async def export_snapshot(
         raise RuntimeError("DB not initialised: init_db() produced no SessionLocal")
 
     db = db_base.SessionLocal()
+    geocode_rows: list[dict] = []
     try:
         if do_sync:
             # Imported lazily: pulls in the parser/Playwright chain, which we
@@ -166,9 +196,13 @@ async def export_snapshot(
                 seed_sources(db)
             except Exception as e:  # non-fatal: admin names only
                 logger.warning("seed_sources failed: %s", e)
+            # The crawler's DB is fresh every run — warm the geocode cache from
+            # the previous snapshot so the Nominatim budget goes to new venues.
+            _import_geocode_cache(db, Path(out_dir) / GEOCODE_CACHE_FILE)
             logger.info("Running full sync%s ...", f" ({', '.join(only_sources)})" if only_sources else "")
             summary = await run_full_sync(db, only_sources=only_sources)
             logger.info("Sync totals: %s", summary.get("totals"))
+        geocode_rows = _export_geocode_cache(db)
 
         rows = _collect_event_rows(db, limit)
         if limit and len(rows) == limit:
@@ -199,6 +233,11 @@ async def export_snapshot(
     weather_bytes = _write_json(
         weather_file, {"generated_at": generated_at, "weather_today": weather_today}
     )
+    if geocode_rows:
+        _write_json(
+            out_path / GEOCODE_CACHE_FILE,
+            {"generated_at": generated_at, "entries": geocode_rows},
+        )
 
     return {
         "events_path": str(events_file),
@@ -208,6 +247,7 @@ async def export_snapshot(
         "events_bytes": events_bytes,
         "weather_bytes": weather_bytes,
         "weather_available": bool(weather_today.get("available")),
+        "geocode_cache_entries": len(geocode_rows),
         "generated_at": generated_at,
     }
 

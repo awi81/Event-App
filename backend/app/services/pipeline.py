@@ -77,7 +77,9 @@ async def geocode_pending_events(db: Session, max_nominatim_calls: int = 100) ->
         db.query(Event)
         .filter((Event.lat.is_(None)) | (Event.lon.is_(None)))
         .filter(Event.archived_at.is_(None))
-        .limit(500)
+        # Known-venue and cache hits are free; only Nominatim is capped below.
+        # 500 was too small once wasgehtapp alone brought 700 uncoordinated rows.
+        .limit(5000)
         .all()
     )
 

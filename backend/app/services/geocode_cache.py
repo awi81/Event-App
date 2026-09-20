@@ -38,6 +38,52 @@ def get_cached_geocode(db: Session, query: str) -> Optional[Tuple[Optional[float
     return (row.lat, row.lon)
 
 
+def export_cache(db: Session) -> list[dict]:
+    """All still-fresh cache rows as plain dicts (for the committed snapshot).
+
+    The GitHub-Actions crawler starts with an empty DB every run; without this
+    the 100-calls-per-run Nominatim budget would re-geocode the same venues
+    forever and most events would never get coordinates.
+    """
+    now = datetime.now(timezone.utc)
+    rows: list[dict] = []
+    for row in db.query(GeocodeCache).all():
+        if not row.fetched_at:
+            continue
+        fetched_at = row.fetched_at
+        if fetched_at.tzinfo is None:
+            fetched_at = fetched_at.replace(tzinfo=timezone.utc)
+        is_positive = row.lat is not None and row.lon is not None
+        if now - fetched_at > (POSITIVE_TTL if is_positive else NEGATIVE_TTL):
+            continue
+        rows.append(
+            {"query": row.query, "lat": row.lat, "lon": row.lon, "fetched_at": fetched_at.isoformat()}
+        )
+    rows.sort(key=lambda r: r["query"])
+    return rows
+
+
+def import_cache(db: Session, rows: list[dict]) -> int:
+    """Seed the cache table from exported rows; existing entries win. Returns inserted count."""
+    inserted = 0
+    for r in rows:
+        key = _normalize(str(r.get("query") or ""))
+        if not key:
+            continue
+        try:
+            fetched_at = datetime.fromisoformat(str(r.get("fetched_at")))
+        except (TypeError, ValueError):
+            continue
+        if fetched_at.tzinfo is None:
+            fetched_at = fetched_at.replace(tzinfo=timezone.utc)
+        if db.query(GeocodeCache).filter(GeocodeCache.query == key).first():
+            continue
+        db.add(GeocodeCache(query=key, lat=r.get("lat"), lon=r.get("lon"), fetched_at=fetched_at))
+        inserted += 1
+    db.commit()
+    return inserted
+
+
 def store_geocode(db: Session, query: str, lat: Optional[float], lon: Optional[float]) -> None:
     key = _normalize(query)
     if not key:
