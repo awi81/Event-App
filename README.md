@@ -1,7 +1,7 @@
 # Event-App Essen
 
 Eine mobil optimierte Web-App, die rund um **Essen Werden** zeigt, was heute, morgen
-und am Wochenende los ist — aus 28 lokalen Quellen, automatisch zusammengetragen.
+und am Wochenende los ist — aus 27 lokalen Quellen, automatisch zusammengetragen.
 
 Die App läuft komplett **ohne eigenen Server**: Ein GitHub-Actions-Job crawlt 2×/Tag
 alle Quellen, schreibt einen statischen Daten-Snapshot ins Repo und veröffentlicht das
@@ -35,7 +35,7 @@ Programm abläuft:
 
 1. **PostgreSQL** startet als Container — eine leere Datenbank, die nur für diesen Lauf lebt
 2. Das **Backend** wird installiert, inklusive Chromium für die Playwright-Quellen
-3. Die **komplette Crawl-Pipeline** läuft: alle 28 Quellen, Geocoding, Wetter,
+3. Die **komplette Crawl-Pipeline** läuft: alle 27 Quellen, Geocoding, Wetter,
    Dubletten-Erkennung, Quality-Scores
 4. Das Ergebnis wird als `events.json` + `weather.json` **ins Repo committet**
 5. **Next.js** baut daraus die statischen Seiten (eine pro Event)
@@ -77,7 +77,7 @@ docker-compose up -d db
 # Backend-Abhängigkeiten installieren
 cd backend
 pip install -r requirements.txt
-# Playwright-Browser (nur nötig für 6 der 28 Quellen-Crawler)
+# Playwright-Browser (nur nötig für 6 der 27 Quellen-Crawler)
 python -m playwright install chromium
 
 # Snapshot erzeugen (gegen die laufende DB; --no-sync exportiert den DB-Stand as-is)
