@@ -8,7 +8,7 @@ The intent is to catch *parsing regressions* quickly: if a site changes its
 markup the parser may still return [] silently in production, but a test that
 feeds known-good content will keep documenting what we expect to extract.
 """
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from app.services.borbeck import convert_rss_entry as borbeck_convert, parse_rss_feed as borbeck_parse
 from app.services.ruhrpott_kids import (
@@ -38,7 +38,7 @@ from app.services.gasometer import parse_gasometer_text
 from app.services.unperfekthaus import parse_uph_text
 from app.services.theater_essen import parse_tup_text
 from app.services.folkwang import parse_folkwang_text
-from app.services.wasgehtapp import extract_events_from_text as wga_extract
+from app.services.wasgehtapp import parse_wasgehtapp_day_html as wga_parse_day
 
 
 # ─────────────────────────────── borbeck.de (RSS) ───────────────────────────
@@ -444,44 +444,172 @@ def test_folkwang_no_match_without_date_header():
 
 # ─────────────────────────────── wasgehtapp.de ──────────────────────────────
 
+# wasgehtapp.de server-renders one day per page as
+# <div class="katcontainer" kat="...">...<div class="termin">...</div></div>
+# blocks. These fixtures mirror that markup (trimmed to the parts the parser
+# reads) rather than reconstructing the site's full page.
 
-def test_wasgehtapp_extracts_event_from_text():
-    text = """
-Konzert im Stadtgarten Essen
-Fr, 20.03, 19:30 Uhr   pin Stadtgarten Essen
-""".strip()
-    events = wga_extract(text, "Essen")
-    assert any("Konzert" in e["title"] for e in events)
-    e = next(x for x in events if "Konzert" in x["title"])
-    assert e["start_at"].hour == 19 and e["start_at"].minute == 30
+
+def _wga_katcontainer(kat: str, label: str, termine_html: str) -> str:
+    return f"""
+<div class="katcontainer {kat} normal" kat="{kat}">
+  <div class="kat"><div class="wc"><span class="icon">{kat}</span>{label} / So, 20.09.26 <a href="suche.php" class="more">..mehr</a></div></div>
+  <div class="wc termincontainer">
+    {termine_html}
+  </div>
+</div>
+"""
+
+
+def test_wasgehtapp_extracts_event_with_local_venue():
+    """Essen venues have no ', Stadt'-Anhängsel and no <small>km</small>."""
+    termin = """
+    <div class="termin inline" id="111" data-kat="konzert" loc="1">
+      <div><div class="flex"><div class="meta">
+        <h3 class="titel"><a href="termin_details.php?id=111&date=2026-09-20" class="target">Jazz im Grend</a></h3>
+        <div class="zeitloc">
+          <span class="zeit">19:30 Uhr</span>
+          <a href="location.php?id=1" class="location"><span class="icon">pin</span> Kulturzentrum Grend</a>
+        </div>
+      </div></div></div>
+    </div>
+    """
+    html = _wga_katcontainer("konzert", "Konzert", termin)
+    events = wga_parse_day(html, date(2026, 9, 20))
+    assert len(events) == 1
+    e = events[0]
+    assert e["title"] == "Jazz im Grend"
+    assert e["start_at"] == datetime(2026, 9, 20, 19, 30)
+    assert e["venue_name"] == "Kulturzentrum Grend"
+    assert e["city"] == "Essen"
+    assert e["category"] == "Konzert"
     assert e["source_name"] == "wasgehtapp.de"
+    assert e["source_url"] == "https://www.wasgehtapp.de/termin_details.php?id=111&date=2026-09-20"
+    assert e["canonical_id"]
 
 
-def test_wasgehtapp_filters_known_meta_lines():
-    text = """
-3,50 €
-Fr, 20.03, 19:30 Uhr   pin X
-""".strip()
-    events = wga_extract(text, "Essen")
-    # No proper title above the date → should yield nothing
+def test_wasgehtapp_extracts_out_of_town_venue_city():
+    """Venues outside the queried city carry ', Stadt' + a <small>km</small> sibling."""
+    termin = """
+    <div class="termin inline" id="222" data-kat="konzert" loc="2">
+      <div><div class="flex"><div class="meta">
+        <h3 class="titel"><a href="termin_details.php?id=222&date=2026-09-20" class="target">Stimmen der Erde</a></h3>
+        <div class="zeitloc">
+          <span class="zeit">11:00 Uhr</span>
+          <a href="location.php?id=2" class="location"><span class="icon">pin</span> Anneliese Brost Musikforum Ruhr (Großer Saal), Bochum</a>, <small>14,4 km</small>
+        </div>
+      </div></div></div>
+    </div>
+    """
+    html = _wga_katcontainer("konzert", "Konzert", termin)
+    events = wga_parse_day(html, date(2026, 9, 20))
+    assert len(events) == 1
+    e = events[0]
+    assert e["venue_name"] == "Anneliese Brost Musikforum Ruhr (Großer Saal)"
+    assert e["city"] == "Bochum"
+
+
+def test_wasgehtapp_description_stops_before_tags_chips():
+    """The tags-icon marker and its comma-joined <a class='tag'> chips aren't
+    part of the description — including them left stray leading/trailing
+    commas in production."""
+    termin_with_text = """
+    <div class="termin inline" id="333" data-kat="konzert" loc="1">
+      <div><div class="flex"><div class="meta">
+        <h3 class="titel"><a href="termin_details.php?id=333&date=2026-09-20" class="target">Kammerkonzert</a></h3>
+        <div class="subtitel tags">Kammerkonzert mit Emily Florian <span class="icon">tags</span> <a href="suche.php?tag=geige" class="tag">geige</a>, <a href="suche.php?tag=klavier" class="tag">klavier</a></div>
+        <div class="zeitloc">
+          <span class="zeit">18:00 Uhr</span>
+          <a href="location.php?id=1" class="location"><span class="icon">pin</span> Kreuzeskirche</a>
+        </div>
+      </div></div></div>
+    </div>
+    """
+    termin_tags_only = """
+    <div class="termin inline" id="334" data-kat="konzert" loc="1">
+      <div><div class="flex"><div class="meta">
+        <h3 class="titel"><a href="termin_details.php?id=334&date=2026-09-20" class="target">Sonne, Sand, Wind</a></h3>
+        <div class="subtitel tags"> <span class="icon">tags</span> <a href="suche.php?tag=klassik" class="tag">klassik</a>, <a href="suche.php?tag=jazz" class="tag">jazz</a></div>
+        <div class="zeitloc">
+          <span class="zeit">20:00 Uhr</span>
+          <a href="location.php?id=1" class="location"><span class="icon">pin</span> Stadtmuseum</a>
+        </div>
+      </div></div></div>
+    </div>
+    """
+    html = _wga_katcontainer("konzert", "Konzert", termin_with_text + termin_tags_only)
+    events = wga_parse_day(html, date(2026, 9, 20))
+    by_title = {e["title"]: e for e in events}
+    assert by_title["Kammerkonzert"]["short_description"] == "Kammerkonzert mit Emily Florian"
+    # No leftover ", " once the tags-only chips are stripped.
+    assert by_title["Sonne, Sand, Wind"]["short_description"] is None
+
+
+def test_wasgehtapp_skips_kino_tipp_and_favoriten_categories():
+    """Kinoprogramm, the Vorschau/Tipps teaser box and the (always empty)
+    Favoriten box are not real curated events and must not be extracted."""
+    kino = _wga_katcontainer(
+        "kino", "Kinoprogramm",
+        '<div class="termin inline" id="9" data-kat="kino"><div><div class="flex"><div class="meta">'
+        '<h3 class="titel"><a href="termin_kino.php?id=9" class="target">Irgendein Film</a></h3>'
+        '<div class="zeitloc"><span class="zeit">20:00 Uhr</span></div>'
+        "</div></div></div></div>",
+    )
+    tipp = _wga_katcontainer(
+        "tipp", "Vorschau",
+        '<div class="termin inline" id="8" data-kat="tipp"><div><div class="flex"><div class="meta">'
+        '<h3 class="titel"><a href="termin_details.php?id=8&date=2026-09-23" class="target">Teaser Event</a></h3>'
+        '<div class="zeitloc"><span class="zeit">16:00 Uhr</span></div>'
+        "</div></div></div></div>",
+    )
+    favoriten = '<div class="katcontainer favoriten off" kat="favoriten"><div class="wc termincontainer"></div></div>'
+    events = wga_parse_day(kino + tipp + favoriten, date(2026, 9, 20))
+    assert events == []
+
+
+def test_wasgehtapp_invalid_time_skips_single_event():
+    """Eine ungültige Uhrzeit darf nur dieses Event überspringen, nicht den ganzen Lauf."""
+    valid = """
+    <div class="termin inline" id="444" data-kat="konzert">
+      <div><div class="flex"><div class="meta">
+        <h3 class="titel"><a href="termin_details.php?id=444&date=2026-09-20" class="target">Gültiges Konzert</a></h3>
+        <div class="zeitloc"><span class="zeit">19:30 Uhr</span></div>
+      </div></div></div>
+    </div>
+    """
+    invalid = """
+    <div class="termin inline" id="445" data-kat="konzert">
+      <div><div class="flex"><div class="meta">
+        <h3 class="titel"><a href="termin_details.php?id=445&date=2026-09-20" class="target">Ungültiges Event</a></h3>
+        <div class="zeitloc"><span class="zeit">99:99 Uhr</span></div>
+      </div></div></div>
+    </div>
+    """
+    html = _wga_katcontainer("konzert", "Konzert", valid + invalid)
+    events = wga_parse_day(html, date(2026, 9, 20))
     titles = [e["title"] for e in events]
-    assert "3,50 €" not in titles
+    assert "Gültiges Konzert" in titles
+    assert "Ungültiges Event" not in titles
 
 
-def test_wasgehtapp_invalid_date_skips_single_event():
-    """Ein ungültiges Datum (z.B. Monat=13) darf nur dieses Event überspringen."""
-    # Monat 13 ist ungültig → ValueError im datetime()-Konstruktor
-    text = """
-Gültiges Konzert
-Fr, 20.03, 19:30 Uhr
-Ungültiges Event
-Sa, 05.13, 20:00 Uhr
-""".strip()
-    # Kein Exception, und das gültige Event wird trotzdem gefunden
-    events = wga_extract(text, "Essen")
-    assert any("Konzert" in e["title"] for e in events)
-    # Das ungültige Event ist nicht dabei
-    assert not any("Ungültig" in e.get("title", "") for e in events)
+def test_wasgehtapp_skips_termin_without_title_or_time():
+    no_title = """
+    <div class="termin inline" id="5" data-kat="konzert">
+      <div><div class="flex"><div class="meta">
+        <div class="zeitloc"><span class="zeit">19:30 Uhr</span></div>
+      </div></div></div>
+    </div>
+    """
+    no_time = """
+    <div class="termin inline" id="6" data-kat="konzert">
+      <div><div class="flex"><div class="meta">
+        <h3 class="titel"><a href="termin_details.php?id=6&date=2026-09-20" class="target">Ohne Zeit</a></h3>
+      </div></div></div>
+    </div>
+    """
+    html = _wga_katcontainer("konzert", "Konzert", no_title + no_time)
+    events = wga_parse_day(html, date(2026, 9, 20))
+    assert events == []
 
 
 # ──────────────────────────── to_berlin_naive ───────────────────────────────

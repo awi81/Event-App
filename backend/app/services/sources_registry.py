@@ -50,7 +50,7 @@ SOURCES: list[SourceEntry] = [
     SourceEntry("Zollverein", sync_zollverein, "https://www.zollverein.de/", "api"),
     SourceEntry("Rausgegangen", sync_rausgegangen, "https://www.rausgegangen.de/", "playwright"),
     SourceEntry("Ruhrpott-Kids", sync_ruhrpott_kids, "https://ruhrpottkids.com/", "rss"),
-    SourceEntry("wasgehtapp", sync_wasgehtapp, "https://www.wasgehtapp.de/", "playwright"),
+    SourceEntry("wasgehtapp", sync_wasgehtapp, "https://www.wasgehtapp.de/", "html"),
     SourceEntry("Grugapark", sync_grugapark, "https://www.grugapark.de/", "html"),
     # borbeck.de deactivated 2026-09-20: the RSS feed is local news (sports
     # results, business notes) without dates or categories, not events. It
