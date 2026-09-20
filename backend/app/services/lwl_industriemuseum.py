@@ -381,12 +381,21 @@ async def fetch_lwl_industriemuseum_events() -> List[Dict]:
         for index, site in enumerate(SITES):
             if index > 0:
                 await asyncio.sleep(1.0)
-            try:
-                resp = await client.get(site["list_url"])
-                resp.raise_for_status()
-                events.extend(parse_lwl_html(resp.text, site))
-            except Exception as exc:
-                logger.error(f"LWL {site['key']} fetch failed: {exc}")
+            # The LWL host occasionally times out for a whole run (all three
+            # sites at once, empty httpx message) — one retry after a pause
+            # has been enough so far.
+            for attempt in (1, 2):
+                try:
+                    resp = await client.get(site["list_url"])
+                    resp.raise_for_status()
+                    events.extend(parse_lwl_html(resp.text, site))
+                    break
+                except Exception as exc:
+                    if attempt == 1:
+                        logger.info(f"LWL {site['key']}: {type(exc).__name__}: {exc} — retry")
+                        await asyncio.sleep(5.0)
+                    else:
+                        logger.error(f"LWL {site['key']} fetch failed: {type(exc).__name__}: {exc}")
 
     logger.info(f"LWL-Industriemuseum: {len(events)} events total")
     return events
