@@ -68,6 +68,69 @@ _BROWSER_UA = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
 )
+# wasgehtapp.de answers 403 to bare HTTP clients from datacenter IPs (GitHub
+# Actions) while the same page renders fine in a browser there. Full browser
+# headers first; if the very first day is still 403, the run switches to a
+# headless browser for all days (14 page loads, ~1 min).
+_HTTP_HEADERS = {
+    "User-Agent": _BROWSER_UA,
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "de-DE,de;q=0.9,en;q=0.7",
+    "Upgrade-Insecure-Requests": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+}
+
+
+def _day_url(day: date) -> str:
+    return f"{WASGEHTAPP_ESSEN_URL}&date={day.isoformat()}"
+
+
+async def _fetch_days_http(days: List[date]) -> Dict[date, str]:
+    """HTML per day via httpx. Raises PermissionError on a 403 for the first day
+    so the caller can fall back to a browser; later 403s are logged and skipped."""
+    pages: Dict[date, str] = {}
+    async with httpx.AsyncClient(
+        timeout=30.0, follow_redirects=True, headers=_HTTP_HEADERS
+    ) as client:
+        for i, day in enumerate(days):
+            try:
+                response = await client.get(_day_url(day))
+                if response.status_code == 403 and i == 0:
+                    raise PermissionError("403 on first day")
+                response.raise_for_status()
+                pages[day] = response.text
+            except PermissionError:
+                raise
+            except Exception as e:
+                logger.warning(f"wasgehtapp: Fehler beim Laden von {day.isoformat()}: {e}")
+            if i < len(days) - 1:
+                await asyncio.sleep(_REQUEST_PAUSE_SECONDS)
+    return pages
+
+
+async def _fetch_days_playwright(days: List[date]) -> Dict[date, str]:
+    """Same pages through headless Chromium (pattern from gasometer.py)."""
+    from playwright.async_api import async_playwright
+
+    pages: Dict[date, str] = {}
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        try:
+            context = await browser.new_context(user_agent=_BROWSER_UA, locale="de-DE")
+            page = await context.new_page()
+            for day in days:
+                try:
+                    await page.goto(_day_url(day), wait_until="domcontentloaded", timeout=45000)
+                    pages[day] = await page.content()
+                except Exception as e:
+                    logger.warning(f"wasgehtapp (Playwright): Fehler bei {day.isoformat()}: {e}")
+                await page.wait_for_timeout(int(_REQUEST_PAUSE_SECONDS * 1000))
+        finally:
+            await browser.close()
+    return pages
 
 
 async def fetch_wasgehtapp_events(
@@ -76,40 +139,38 @@ async def fetch_wasgehtapp_events(
     """Fetch events from wasgehtapp.de for today .. today+days_ahead-1 (Essen, 20km)."""
     now_berlin = datetime.now(_BERLIN).replace(tzinfo=None)
     today = now_berlin.date()
+    days = [today + timedelta(days=offset) for offset in range(days_ahead)]
+
+    try:
+        pages = await _fetch_days_http(days)
+    except PermissionError:
+        logger.info("wasgehtapp: 403 für HTTP-Client, wechsle auf Playwright")
+        try:
+            pages = await _fetch_days_playwright(days)
+        except Exception as e:
+            logger.error(f"wasgehtapp: Playwright-Fallback fehlgeschlagen: {e}")
+            return []
 
     events: List[Dict] = []
     seen_ids: set[str] = set()
+    for day in days:
+        html = pages.get(day)
+        if not html:
+            continue
+        try:
+            day_events = parse_wasgehtapp_day_html(html, day, city)
+        except Exception as e:
+            logger.warning(f"wasgehtapp: Parser-Fehler für {day.isoformat()}: {e}")
+            continue
 
-    async with httpx.AsyncClient(
-        timeout=30.0, follow_redirects=True, headers={"User-Agent": _BROWSER_UA}
-    ) as client:
-        for offset in range(days_ahead):
-            day = today + timedelta(days=offset)
-            url = f"{WASGEHTAPP_ESSEN_URL}&date={day.isoformat()}"
-            try:
-                response = await client.get(url)
-                response.raise_for_status()
-            except Exception as e:
-                logger.warning(f"wasgehtapp: Fehler beim Laden von {day.isoformat()}: {e}")
+        for ev in day_events:
+            if ev["start_at"] < now_berlin:
                 continue
-
-            try:
-                day_events = parse_wasgehtapp_day_html(response.text, day, city)
-            except Exception as e:
-                logger.warning(f"wasgehtapp: Parser-Fehler für {day.isoformat()}: {e}")
+            cid = ev["canonical_id"]
+            if cid in seen_ids:
                 continue
-
-            for ev in day_events:
-                if ev["start_at"] < now_berlin:
-                    continue
-                cid = ev["canonical_id"]
-                if cid in seen_ids:
-                    continue
-                seen_ids.add(cid)
-                events.append(ev)
-
-            if offset < days_ahead - 1:
-                await asyncio.sleep(_REQUEST_PAUSE_SECONDS)
+            seen_ids.add(cid)
+            events.append(ev)
 
     logger.info(f"Extracted {len(events)} events from wasgehtapp.de ({days_ahead} Tage)")
     return events

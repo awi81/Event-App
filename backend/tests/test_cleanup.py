@@ -150,16 +150,19 @@ def test_purge_respects_custom_retention(db_session):
 
 def test_purge_broken_titles_removes_venue_and_label_titles(db_session):
     # Rausgegangen text extractor sometimes promotes a venue header or ad label.
-    _add(db_session, "venue_001", title="UNESCO-WELTERBE ZOLLVEREIN | ESSEN")
-    _add(db_session, "venue_002", title="Sponsored", venue_name="Waste Me")
-    _add(db_session, "venue_003", title="Zeche Carl", venue_name="Zeche Carl")
-    _add(db_session, "venue_004", title="Zollverein, Essen", venue_name=None)
-    _add(db_session, "ok_003", title="Sommerfest UNESCO-Welterbe Zollverein", venue_name="Zollverein")
-    _add(db_session, "ok_004", title="Zeche Carl Open Air", venue_name="Zeche Carl")
+    rg = "Rausgegangen"
+    _add(db_session, "venue_001", title="UNESCO-WELTERBE ZOLLVEREIN | ESSEN", source_name=rg)
+    _add(db_session, "venue_002", title="Sponsored", venue_name="Waste Me", source_name=rg)
+    _add(db_session, "venue_003", title="Zeche Carl", venue_name="Zeche Carl", source_name=rg)
+    _add(db_session, "venue_004", title="Zollverein, Essen", venue_name=None, source_name=rg)
+    _add(db_session, "ok_003", title="Sommerfest UNESCO-Welterbe Zollverein", venue_name="Zollverein", source_name=rg)
+    _add(db_session, "ok_004", title="Zeche Carl Open Air", venue_name="Zeche Carl", source_name=rg)
+    # Title == venue is legitimate outside Rausgegangen (permanent exhibitions).
+    _add(db_session, "ok_005", title="Portal der Industriekultur", venue_name="Portal der Industriekultur", source_name="Zollverein")
     db_session.commit()
 
     deleted = purge_broken_titles(db_session)
     assert deleted == 4
 
     remaining = {e.canonical_id for e in db_session.query(Event).all()}
-    assert remaining == {"ok_003", "ok_004"}
+    assert remaining == {"ok_003", "ok_004", "ok_005"}

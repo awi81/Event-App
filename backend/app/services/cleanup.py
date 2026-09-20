@@ -87,14 +87,21 @@ _LABEL_TITLE_RE = re.compile(r"^(?:sponsored|anzeige|tagestipp|verlosung)$", re.
 _VENUE_HEADER_RE = re.compile(r"^[A-ZÄÖÜ0-9 .,&'\-]+\|\s*ESSEN$")
 
 
-def _is_broken_title(title: str | None, venue_name: str | None) -> bool:
+def _is_broken_title(
+    title: str | None, venue_name: str | None, source_name: str | None = None
+) -> bool:
     t = (title or "").strip()
     if not t:
         return True
     if _BROKEN_TITLE_RE.search(t) or _LABEL_TITLE_RE.search(t) or _VENUE_HEADER_RE.search(t):
         return True
     # Title is just a venue again ("Salzlager, UNESCO-Welterbe Zollverein",
-    # "Kreuzeskirche, Essen") — either this event's own venue or a known one.
+    # "Kreuzeskirche, Essen"). Only Rausgegangen's text extractor produces
+    # that; elsewhere title == venue is legitimate ("Portal der Industriekultur"
+    # is an exhibition at the venue of the same name) — 97 Zollverein rows were
+    # wrongly purged before this guard.
+    if (source_name or "") != "Rausgegangen":
+        return False
     tl = re.sub(r",?\s*essen$", "", t.lower()).strip()
     v = (venue_name or "").strip().lower()
     if v and tl == v:
@@ -120,7 +127,7 @@ def purge_broken_titles(db: Session | None = None) -> int:
         # short-list missed digit-prefixed titles like "5Di, 12. Mai | ...".
         candidates = db.query(Event).all()
         broken_ids = [
-            c.id for c in candidates if _is_broken_title(c.title, c.venue_name)
+            c.id for c in candidates if _is_broken_title(c.title, c.venue_name, c.source_name)
         ]
         if not broken_ids:
             return 0
