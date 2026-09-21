@@ -104,10 +104,16 @@ def find_known_venue(venue_name: str, title: str = "") -> dict | None:
     Check if the venue or title contains a known venue name.
     Returns dict with lat, lon, address if found.
     """
-    search_text = f"{venue_name or ''} {title or ''}".lower()
+    # Sources spell the same house differently ("Aalto-Theater", "Aalto Theater",
+    # "AALTO THEATER (Foyer)") — compare with hyphens folded to spaces.
+    search_text = _fold(f"{venue_name or ''} {title or ''}")
 
     for keyword, coords in KNOWN_VENUES.items():
-        if keyword in search_text:
+        if _fold(keyword) in search_text:
             return coords
 
     return None
+
+
+def _fold(text: str) -> str:
+    return " ".join(text.lower().replace("-", " ").replace("‐", " ").split())

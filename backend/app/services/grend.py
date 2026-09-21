@@ -187,7 +187,10 @@ def _parse_vsel_block(block) -> Optional[Dict]:
 
 async def fetch_grend_events() -> List[Dict]:
     """Fetch GREND events from homepage (VSEL shortcode output)."""
+    # Host publishes AAAA records; GitHub runners have no working IPv6 and
+    # time out on connect. Force IPv4.
     async with httpx.AsyncClient(
+        transport=httpx.AsyncHTTPTransport(local_address="0.0.0.0"),
         timeout=30.0,
         follow_redirects=True,
         headers=_HEADERS,

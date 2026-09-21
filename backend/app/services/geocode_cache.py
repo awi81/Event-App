@@ -7,9 +7,10 @@ from sqlalchemy.orm import Session
 from app.models.cache import GeocodeCache
 
 
-# Negative results expire faster so a flaky Nominatim call doesn't get stuck.
+# Negative results expire faster so a flaky Nominatim answer doesn't get stuck
+# (an empty result list happens under load, too).
 POSITIVE_TTL = timedelta(days=180)
-NEGATIVE_TTL = timedelta(days=14)
+NEGATIVE_TTL = timedelta(days=3)
 
 
 def _normalize(query: str) -> str:

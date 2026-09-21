@@ -5,6 +5,8 @@ Geocoding Service - Convert addresses to coordinates using Nominatim (OpenStreet
 import asyncio
 import logging
 import os
+import re
+
 import httpx
 from typing import Optional, Tuple
 
@@ -24,6 +26,36 @@ if _CONTACT == "your-email@example.com":
 NOMINATIM_USER_AGENT = f"Event-App-Essen/1.0 (+{_CONTACT})"
 
 
+class GeocodeUnavailable(Exception):
+    """Nominatim did not answer properly (429/5xx/timeout). Not a "not found":
+    callers must not cache this as a negative result."""
+
+
+# Nominatim policy: at most one request per second, across the whole process.
+_last_call_at = 0.0
+_call_lock = asyncio.Lock()
+
+
+async def _throttle() -> None:
+    global _last_call_at
+    async with _call_lock:
+        loop = asyncio.get_running_loop()
+        wait = _last_call_at + 1.0 - loop.time()
+        if wait > 0:
+            await asyncio.sleep(wait)
+        _last_call_at = loop.time()
+
+
+_VENUE_NOISE_RE = re.compile(r"\s*\([^)]*\)|\s+[-–•|]\s+.*$|[\"„“”]")
+
+
+def clean_venue_name(venue_name: str) -> str:
+    """"Anneliese Brost Musikforum Ruhr (Großer Saal)" -> "Anneliese Brost Musikforum Ruhr",
+    "Alleato Arena - Heimat der Füchse" -> "Alleato Arena". Nominatim's free-text
+    search fails on hall/room suffixes and slogans."""
+    return " ".join(_VENUE_NOISE_RE.sub("", venue_name or "").split())
+
+
 async def geocode_address(address: str, city: str = "Essen") -> Optional[Tuple[float, float]]:
     """
     Geocode an address to lat/lon coordinates.
@@ -35,6 +67,7 @@ async def geocode_address(address: str, city: str = "Essen") -> Optional[Tuple[f
     # Build search query
     query = f"{address}, {city}, Germany"
 
+    await _throttle()
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(
@@ -49,16 +82,19 @@ async def geocode_address(address: str, city: str = "Essen") -> Optional[Tuple[f
                     "User-Agent": NOMINATIM_USER_AGENT,
                 }
             )
+    except httpx.HTTPError as exc:
+        raise GeocodeUnavailable(f"{type(exc).__name__}: {exc}") from exc
 
-            if response.status_code == 200:
-                data = response.json()
-                if data and len(data) > 0:
-                    lat = float(data[0]["lat"])
-                    lon = float(data[0]["lon"])
-                    return (lat, lon)
-    except Exception:
-        pass
-
+    if response.status_code != 200:
+        # 429/403 = we are being throttled, 5xx = their problem; either way
+        # this says nothing about the address.
+        raise GeocodeUnavailable(f"HTTP {response.status_code}")
+    try:
+        data = response.json()
+        if data:
+            return (float(data[0]["lat"]), float(data[0]["lon"]))
+    except (ValueError, KeyError, TypeError) as exc:
+        raise GeocodeUnavailable(f"bad payload: {exc}") from exc
     return None
 
 
@@ -67,24 +103,27 @@ async def geocode_event_venue(venue_name: Optional[str], address_text: Optional[
     Try to geocode an event's venue/address.
     Tries multiple combinations to find the best match.
     """
-    # Build list of address candidates to try
-    candidates = []
+    # Build list of address candidates to try (geocode_address appends
+    # ", {city}, Germany" itself). Raises GeocodeUnavailable on service errors.
+    candidates: list[str] = []
+    cleaned = clean_venue_name(venue_name or "")
 
     if venue_name and address_text:
         candidates.append(f"{venue_name}, {address_text}")
     if venue_name:
-        candidates.append(f"{venue_name}, {city}")
+        candidates.append(venue_name)
+    if cleaned and cleaned.lower() != (venue_name or "").lower():
+        candidates.append(cleaned)
     if address_text:
-        candidates.append(f"{address_text}, {city}")
-    if venue_name:
-        candidates.append(f"{venue_name}, Essen, Germany")
+        candidates.append(address_text)
 
-    # Try each candidate
+    seen: set[str] = set()
     for query in candidates:
+        if query.lower() in seen:
+            continue
+        seen.add(query.lower())
         result = await geocode_address(query, city)
         if result:
             return result
-        # Rate limit: Nominatim requires 1 second between requests
-        await asyncio.sleep(1)
 
     return None

@@ -17,7 +17,7 @@ from app.services.cleanup import (
     merge_existing_cross_source_duplicates,
 )
 from app.services.distance import calculate_distances
-from app.services.geocoder import geocode_event_venue
+from app.services.geocoder import GeocodeUnavailable, geocode_event_venue
 from app.services.geocode_cache import get_cached_geocode, store_geocode
 from app.services.known_venues import find_known_venue
 from app.services.weather import apply_weather_to_events
@@ -85,6 +85,7 @@ async def geocode_pending_events(db: Session, max_nominatim_calls: int = 100) ->
 
     updated = 0
     nominatim_calls = 0
+    service_down = False
 
     for event in pending:
         # 1. Known venue fast-path
@@ -115,7 +116,7 @@ async def geocode_pending_events(db: Session, max_nominatim_calls: int = 100) ->
         # intern können daraus bis zu 4 Nominatim-HTTP-Requests werden (ein
         # Kandidat pro Versuch). Das Rate-Limit-Sleep (1 s) sitzt in geocoder.py
         # direkt nach jedem HTTP-Call → hier kein zusätzliches Sleep nötig.
-        if nominatim_calls >= max_nominatim_calls:
+        if nominatim_calls >= max_nominatim_calls or service_down:
             continue
         nominatim_calls += 1
         try:
@@ -124,9 +125,15 @@ async def geocode_pending_events(db: Session, max_nominatim_calls: int = 100) ->
                 event.address_text,
                 event.city or "Essen",
             )
+        except GeocodeUnavailable as e:
+            # Throttled or Nominatim down: this is not "address unknown", so
+            # never cache it as a miss — and stop hammering for this run.
+            logger.warning(f"Nominatim unavailable, stopping geocoding for this run: {e}")
+            service_down = True
+            continue
         except Exception as e:
             logger.debug(f"Nominatim error: {e}")
-            result = None
+            continue
 
         if result:
             event.lat, event.lon = result

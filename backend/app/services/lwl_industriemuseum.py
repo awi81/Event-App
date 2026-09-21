@@ -373,7 +373,10 @@ def _finish_event(base: Dict, site: Dict, start_at: datetime, end_at: Optional[d
 async def fetch_lwl_industriemuseum_events() -> List[Dict]:
     """Fetch the listing page of all three sites (1 s pause between requests)."""
     events: List[Dict] = []
+    # Host publishes AAAA records; GitHub runners have no working IPv6 and
+    # time out on connect. Force IPv4.
     async with httpx.AsyncClient(
+        transport=httpx.AsyncHTTPTransport(local_address="0.0.0.0"),
         timeout=30.0,
         follow_redirects=True,
         headers=_HEADERS,

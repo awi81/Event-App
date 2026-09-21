@@ -186,3 +186,12 @@ class TestFindKnownVenue:
         """'essen' allein als Keyword ist nicht vorhanden — würde sonst alles matchen."""
         from app.services.known_venues import KNOWN_VENUES
         assert "essen" not in KNOWN_VENUES
+
+
+def test_known_venue_matches_hyphen_and_space_spellings():
+    from app.services.known_venues import find_known_venue
+
+    assert find_known_venue("Aalto Theater (Foyer)") is not None
+    assert find_known_venue("AALTO THEATER") is not None
+    assert find_known_venue("Aalto-Theater") is not None
+    assert find_known_venue("Irgendein Saal") is None
