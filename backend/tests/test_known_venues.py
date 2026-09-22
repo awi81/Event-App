@@ -195,3 +195,18 @@ def test_known_venue_matches_hyphen_and_space_spellings():
     assert find_known_venue("AALTO THEATER") is not None
     assert find_known_venue("Aalto-Theater") is not None
     assert find_known_venue("Irgendein Saal") is None
+
+
+def test_generic_venue_name_resolved_only_with_city():
+    from app.services.known_venues import find_known_venue
+
+    assert find_known_venue("Zeche", "", "Bochum")["lat"] == 51.4510
+    assert find_known_venue("Zeche", "", "Essen") is None
+    assert find_known_venue("Zeche Carl", "", "Essen")["address"] != find_known_venue("Zeche", "", "Bochum")["address"]
+
+
+def test_venues_nominatim_misses():
+    from app.services.known_venues import find_known_venue
+
+    assert find_known_venue("Stratmann Theater") is not None
+    assert find_known_venue("Drucklufthaus")["lon"] == 6.8468

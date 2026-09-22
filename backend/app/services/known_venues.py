@@ -96,16 +96,33 @@ KNOWN_VENUES = {
     "ruhrverband kläranlage kupferdreh": {"lat": 51.3943, "lon": 7.0787, "address": "Ruhrverband Kläranlage Essen-Kupferdreh, Kampmannbrücke 11, 45257 Essen"},
     "musikpalette": {"lat": 51.4537, "lon": 7.0131, "address": "Musikpalette (MuPa), Kettwiger Str. 20, 45127 Essen"},
     "neue musik zentrale": {"lat": 51.4617, "lon": 7.0147, "address": "Neue Musik Zentrale, Viehofer Platz 18, 45127 Essen"},
+
+    # added 2026-09: Nominatim finds nothing or the wrong place (verified via OSM)
+    "stratmann theater": {"lat": 51.4560, "lon": 7.0107, "address": "Stratmanns Theater, Kennedyplatz 7, 45127 Essen"},
+    "stratmanns theater": {"lat": 51.4560, "lon": 7.0107, "address": "Stratmanns Theater, Kennedyplatz 7, 45127 Essen"},
+    "drucklufthaus": {"lat": 51.4725, "lon": 6.8468, "address": "Druckluft, Am Förderturm 27, 46049 Oberhausen"},
+}
+
+# Generic venue names that only mean one place in combination with the city
+# (wasgehtapp lists the Bochum club just as "Zeche"; Nominatim's first hit for
+# "Zeche, Bochum" is a restaurant in Dahlhausen). Matched exactly, never as
+# substring, so "Zeche Carl" and friends are unaffected.
+CITY_VENUES = {
+    ("zeche", "bochum"): {"lat": 51.4510, "lon": 7.2182, "address": "Zeche Bochum, Prinz-Regent-Str. 50, 44795 Bochum"},
 }
 
 
-def find_known_venue(venue_name: str, title: str = "") -> dict | None:
+def find_known_venue(venue_name: str, title: str = "", city: str = "") -> dict | None:
     """
     Check if the venue or title contains a known venue name.
     Returns dict with lat, lon, address if found.
     """
     # Sources spell the same house differently ("Aalto-Theater", "Aalto Theater",
     # "AALTO THEATER (Foyer)") — compare with hyphens folded to spaces.
+    city_match = CITY_VENUES.get((_fold(venue_name or ""), _fold(city or "")))
+    if city_match:
+        return city_match
+
     search_text = _fold(f"{venue_name or ''} {title or ''}")
 
     for keyword, coords in KNOWN_VENUES.items():

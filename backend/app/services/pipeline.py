@@ -89,7 +89,7 @@ async def geocode_pending_events(db: Session, max_nominatim_calls: int = 100) ->
 
     for event in pending:
         # 1. Known venue fast-path
-        known = find_known_venue(event.venue_name or "", event.title or "")
+        known = find_known_venue(event.venue_name or "", event.title or "", event.city or "")
         if known:
             event.lat = known["lat"]
             event.lon = known["lon"]
