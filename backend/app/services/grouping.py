@@ -22,6 +22,7 @@ import re
 import unicodedata
 
 from app.models.event import Event
+from app.services.cleanup import effective_end
 
 
 _INVISIBLE_CHARS = re.compile(r"[­​‌‍⁠﻿]")
@@ -47,10 +48,16 @@ def _group_key(event: Event) -> tuple[str, str]:
     return (normalise_title(event.title), (event.source_name or "").lower())
 
 
+def _ended(start_at: datetime, end_at: datetime | None, is_all_day: bool | None, now: datetime) -> bool:
+    return effective_end(start_at, end_at, is_all_day) < now
+
+
 def _occurrence_dict(event: Event) -> dict:
     return {
         "id": event.id,
         "start_at": event.start_at,
+        "end_at": event.end_at,
+        "is_all_day": event.is_all_day,
         "venue_name": event.venue_name,
         "source_url": event.source_url,
         "is_permanent_offer": event.is_permanent_offer,
@@ -60,11 +67,11 @@ def _occurrence_dict(event: Event) -> dict:
 def _representative(events: list[Event], now: datetime) -> Event:
     """Pick the event that should drive title/category/score for the group.
 
-    Prefer the occurrence whose start_at is the earliest one >= now; if none
-    are future-dated (e.g. all permanent offers or all missing dates), prefer
+    Prefer the earliest occurrence that is not over yet (running or future);
+    if none are (e.g. all permanent offers or all missing dates), prefer
     the highest quality_score.
     """
-    future = [e for e in events if e.start_at and e.start_at >= now]
+    future = [e for e in events if e.start_at and not _ended(e.start_at, e.end_at, e.is_all_day, now)]
     if future:
         return min(future, key=lambda e: e.start_at)
     return max(events, key=lambda e: (e.quality_score or 0.0))
@@ -108,7 +115,11 @@ def group_events(events: Iterable[Event], now: datetime | None = None) -> list[d
         # Use the earliest upcoming occurrence as the "headline" start_at so
         # the card always shows the soonest performance.
         next_start = next(
-            (o["start_at"] for o in occurrences if o["start_at"] and o["start_at"] >= now),
+            (
+                o["start_at"]
+                for o in occurrences
+                if o["start_at"] and not _ended(o["start_at"], o["end_at"], o["is_all_day"], now)
+            ),
             occurrences[0]["start_at"] if occurrences else None,
         )
 

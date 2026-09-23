@@ -24,8 +24,35 @@ def now_berlin() -> datetime:
     return datetime.now(BERLIN)
 
 
+def effective_end(
+    start_at: datetime | None, end_at: datetime | None, is_all_day: bool | None = None
+) -> datetime | None:
+    """When a row stops being worth showing.
+
+    - an explicit end after the start (exhibition 10-18, a fair over three days)
+    - all-day rows and rows at 00:00 (= date without time) last until the end
+      of their day; otherwise they would vanish at midnight of their own day
+    - anything else ends at its start, like before
+    """
+    if start_at is None:
+        return None
+    if end_at is not None and end_at > start_at:
+        return end_at
+    if is_all_day or (start_at.hour == 0 and start_at.minute == 0):
+        return datetime.combine(start_at.date(), datetime.max.time())
+    return start_at
+
+
+def is_over(event: Event, now: datetime) -> bool:
+    """True if a dated, non-permanent event has ended before ``now`` (naive Berlin)."""
+    if event.is_permanent_offer:
+        return False
+    end = effective_end(event.start_at, event.end_at, event.is_all_day)
+    return end is not None and end < now
+
+
 def archive_past_events(db: Session | None = None) -> int:
-    """Archive events whose start_at is in the past (Berlin time).
+    """Archive events that are over (see ``effective_end``, Berlin time).
     Skips permanent offers (is_permanent_offer=True).
     """
     close_after = False
@@ -39,7 +66,7 @@ def archive_past_events(db: Session | None = None) -> int:
     try:
         now = now_berlin().replace(tzinfo=None)  # DB stores naive datetimes
 
-        archived = (
+        started = (
             db.query(Event)
             .filter(
                 Event.archived_at.is_(None),
@@ -47,11 +74,13 @@ def archive_past_events(db: Session | None = None) -> int:
                 Event.start_at < now,
                 (Event.is_permanent_offer == False) | (Event.is_permanent_offer.is_(None)),
             )
-            .update(
-                {"archived_at": now},
-                synchronize_session="fetch",
-            )
+            .all()
         )
+        archived = 0
+        for event in started:
+            if is_over(event, now):
+                event.archived_at = now
+                archived += 1
 
         db.commit()
         if archived:

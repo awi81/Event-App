@@ -59,6 +59,32 @@ def test_skips_events_without_start_at(db_session):
     assert n == 0
 
 
+def test_keeps_running_event_until_its_end(db_session):
+    now = datetime.now(BERLIN).replace(tzinfo=None)
+    _add(db_session, "running_001", start_at=now - timedelta(hours=2), end_at=now + timedelta(hours=1))
+    _add(db_session, "ended_001", start_at=now - timedelta(hours=3), end_at=now - timedelta(minutes=5))
+    db_session.commit()
+
+    assert archive_past_events(db_session) == 1
+    running = db_session.query(Event).filter(Event.canonical_id == "running_001").first()
+    assert running.archived_at is None
+
+
+def test_all_day_event_lasts_until_end_of_its_day():
+    from app.services.cleanup import effective_end, is_over
+
+    day = datetime(2026, 9, 23)
+    assert effective_end(day, None) == datetime(2026, 9, 23, 23, 59, 59, 999999)
+    assert effective_end(day.replace(hour=10), None, is_all_day=True).date() == day.date()
+    assert effective_end(day.replace(hour=20), None) == day.replace(hour=20)
+    # end before start (bad data) falls back to the start
+    assert effective_end(day.replace(hour=20), day.replace(hour=18)) == day.replace(hour=20)
+
+    event = Event(canonical_id="x", title="T", source_name="S", start_at=day)
+    assert not is_over(event, day.replace(hour=15))
+    assert is_over(event, datetime(2026, 9, 24, 0, 1))
+
+
 def test_doesnt_reprocess_already_archived(db_session):
     yesterday = datetime.now(BERLIN).replace(tzinfo=None) - timedelta(days=1)
     _add(db_session, "again_001", start_at=yesterday)

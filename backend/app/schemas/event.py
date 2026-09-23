@@ -44,6 +44,8 @@ class Occurrence(BaseModel):
     """One performance / time slot of a (potentially recurring) event."""
     id: int
     start_at: Optional[datetime] = None
+    end_at: Optional[datetime] = None
+    is_all_day: Optional[bool] = None
     venue_name: Optional[str] = None
     source_url: Optional[str] = None
     is_permanent_offer: Optional[bool] = None

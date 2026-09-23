@@ -17,6 +17,7 @@ from app.models.event import Event, KidsSuitable, IndoorOutdoor
 from app.models.crawl_run import CrawlRun
 from app.schemas.event import EventResponse
 from app.services.classifier import apply_classification
+from app.services.cleanup import is_over
 from app.services.grouping import group_events
 from app.services.pipeline import run_full_sync
 from app.services.sources_registry import seed_sources
@@ -45,12 +46,16 @@ def get_events(
 ):
     # Hide archived events AND any past-dated events that aren't permanent offers,
     # so the scheduled archive job's lag doesn't leak yesterday's events into "today".
+    # Coarse in SQL (anything from today on or with a future end), exact per row
+    # after loading via is_over — running exhibitions and all-day rows stay.
     now_naive = datetime.now(ZoneInfo("Europe/Berlin")).replace(tzinfo=None)
+    today_start = datetime.combine(now_naive.date(), datetime.min.time())
     query = db.query(Event).filter(Event.archived_at.is_(None))
     query = query.filter(
         or_(
             Event.start_at.is_(None),
-            Event.start_at >= now_naive,
+            Event.start_at >= today_start,
+            Event.end_at >= now_naive,
             Event.is_permanent_offer == True,  # noqa: E712 (SQLAlchemy)
         )
     )
@@ -66,7 +71,9 @@ def get_events(
         )
 
     if start_date:
-        query = query.filter(Event.start_at >= datetime.combine(start_date, datetime.min.time()))
+        # Overlap, like the static client: a fair running Thu-Sun matches Saturday.
+        range_start = datetime.combine(start_date, datetime.min.time())
+        query = query.filter(or_(Event.start_at >= range_start, Event.end_at >= range_start))
     if end_date:
         query = query.filter(Event.start_at <= datetime.combine(end_date, datetime.max.time()))
     if category:
@@ -104,7 +111,7 @@ def get_events(
 
     # Pull enough rows that grouping can produce `limit` groups even when each
     # event has many occurrences (Theater = up to ~30 per production).
-    rows = query.limit(min(limit * 10, 2000)).all()
+    rows = [r for r in query.limit(min(limit * 10, 2000)).all() if not is_over(r, now_naive)]
     grouped = group_events(rows)
 
     # Apply requested sort across groups

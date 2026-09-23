@@ -2,6 +2,7 @@
 
 import { Event, Occurrence } from "@/lib/api";
 import { useFavorites } from "@/lib/favorites";
+import { occurrenceEnd } from "@/lib/filterEvents";
 import { format, parseISO, isToday, isTomorrow, isSaturday, isSunday, isSameDay } from "date-fns";
 import { de } from "date-fns/locale";
 import {
@@ -52,10 +53,8 @@ export function EventCard({ event, now }: EventCardProps) {
     .filter((o) => {
       if (!o.start_at) return false;
       if (event.start_at && o.start_at === event.start_at) return false;
-      // parseLocal equivalent: treat the string as local time (no Z suffix)
-      const d = new Date(o.start_at);
-      if (isNaN(d.getTime())) return false;
-      return d.getTime() >= nowMs;
+      const end = occurrenceEnd(o);
+      return end !== null && end.getTime() >= nowMs;
     })
     .slice(0, 8);
 

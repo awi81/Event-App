@@ -2,6 +2,8 @@
 export interface Occurrence {
   id: number;
   start_at?: string;
+  end_at?: string | null;
+  is_all_day?: boolean | null;
   venue_name?: string;
   source_url?: string;
   is_permanent_offer?: boolean;

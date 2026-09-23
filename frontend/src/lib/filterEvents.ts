@@ -8,12 +8,12 @@
 //  - Non-time filters (category, kids, indoor/outdoor, travel, search, favorites)
 //    are production-level attributes shared by all occurrences -> applied to the
 //    group.
-//  - Time filters (past-hide `>= now`, date range, time-of-day) are per-row on the
+//  - Time filters (past-hide `end >= now`, date-range overlap, time-of-day) are per-row on the
 //    server, which filters rows THEN groups -> here a group survives if ANY of its
 //    occurrences passes the active time filters.
 //  - The headline start_at is recomputed as the earliest *qualifying* occurrence
 //    (never trust the baked start_at; it goes stale on day 2 of a snapshot).
-import { Event, SortMode } from "./api";
+import { Event, Occurrence, SortMode } from "./api";
 
 export interface ClientFilters {
   dateFilter: "all" | "today" | "tomorrow" | "weekend";
@@ -36,6 +36,17 @@ function parseLocal(s?: string | null): Date | null {
   // Our start_at always carries a time component; date-only would parse as UTC.
   const d = new Date(s);
   return isNaN(d.getTime()) ? null : d;
+}
+
+/** When an occurrence stops being worth showing — mirrors cleanup.effective_end:
+ *  explicit end after the start, else end of day for all-day/00:00 rows, else the start. */
+export function occurrenceEnd(occ: Pick<Occurrence, "start_at" | "end_at" | "is_all_day">): Date | null {
+  const start = parseLocal(occ.start_at);
+  if (start === null) return null;
+  const end = parseLocal(occ.end_at);
+  if (end !== null && end > start) return end;
+  if (occ.is_all_day || (start.getHours() === 0 && start.getMinutes() === 0)) return localEndOfDay(start);
+  return start;
 }
 
 function localMidnight(d: Date): Date {
@@ -134,20 +145,24 @@ export function applyClientFilters(all: Event[], f: ClientFilters, now: Date): E
     if (!passesGroupFilters(event, f, favSet, search)) continue;
 
     // --- occurrence-level (time) filters: keep group if ANY occurrence qualifies ---
-    const occs = event.occurrences && event.occurrences.length ? event.occurrences : [{ id: event.id, start_at: event.start_at, is_permanent_offer: event.is_permanent_offer }];
+    const occs: Occurrence[] = event.occurrences && event.occurrences.length
+      ? event.occurrences
+      : [{ id: event.id, start_at: event.start_at, end_at: event.end_at, is_all_day: event.is_all_day, is_permanent_offer: event.is_permanent_offer }];
     let anyQualify = false;
     let eff: Date | null = null;
     let effStr: string | null = null;
 
     for (const occ of occs) {
       const os = parseLocal(occ.start_at);
-      // base past-hide: keep null-dated, future-dated, or permanent offers
-      const basePass = os === null || os.getTime() >= nowMs || event.is_permanent_offer === true;
+      const oe = occurrenceEnd(occ);
+      // base past-hide: keep null-dated, not-yet-ended (running or future), or permanent offers
+      const basePass = os === null || oe!.getTime() >= nowMs || event.is_permanent_offer === true;
       if (!basePass) continue;
-      // date range / time-of-day exclude undated rows (NULL fails SQL comparisons)
+      // date range / time-of-day exclude undated rows (NULL fails SQL comparisons);
+      // the range matches on overlap, so a fair running Thu-Sun shows up on Saturday
       if (rangeActive) {
         if (os === null) continue;
-        if (os < range!.start || os > range!.end) continue;
+        if (os > range!.end || oe! < range!.start) continue;
       }
       if (todActive) {
         if (os === null) continue;
