@@ -27,7 +27,8 @@ export default function DatenschutzPage() {
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Datenschutz und Transparenz</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
               Diese App ist eine private Single-User-Anwendung. Es findet keine Nutzerregistrierung,
-              kein Tracking und keine Übertragung personenbezogener Daten an Dritte statt.
+              kein Tracking und keine Weitergabe personenbezogener Daten durch die App statt. Deine
+              IP-Adresse erhalten Dritte nur, wenn dein Browser deren Inhalte lädt (siehe Drittanbieter).
             </p>
           </header>
 
@@ -55,7 +56,8 @@ export default function DatenschutzPage() {
             <p>
               Beim Betrieb der App werden externe Dienste angefragt. Die App selbst sendet keine
               persönlichen Daten an diese Dienste; die Anfragen enthalten lediglich Adressen, Datumsangaben
-              oder Koordinaten zu Events.
+              oder Koordinaten zu Events. Ausnahmen, bei denen dein Browser direkt einen Drittanbieter
+              kontaktiert: die Kartenkacheln und – nur nach deinem Klick – der Kalender von wasgehtapp.de.
             </p>
             <ul className="space-y-3 mt-3">
               <ListItem
@@ -75,6 +77,12 @@ export default function DatenschutzPage() {
                 purpose="Kartenkacheln für die Leaflet-Karte"
                 country="OSM Foundation (UK)"
                 url="https://wiki.osmfoundation.org/wiki/Privacy_Policy"
+              />
+              <ListItem
+                name="wasgehtapp.de (Cyber IT)"
+                purpose="Eingebetteter Terminkalender „Mehr Termine in der Region“. Wird erst nach Klick auf „Termine laden“ geladen; ab dann ruft dein Browser die Seite direkt bei wasgehtapp.de ab, das dabei deine IP-Adresse und Browserdaten erhält."
+                country="Deutschland"
+                url="https://www.wasgehtapp.de/datenschutz.php"
               />
               <ListItem
                 name="Event-Quellen (Crawler)"
@@ -108,7 +116,7 @@ export default function DatenschutzPage() {
             <p>
               Events werden in einer lokalen PostgreSQL-Datenbank gespeichert und nach Ablauf des
               Veranstaltungsdatums automatisch archiviert (markiert). Geocoding-Cache wird 180 Tage
-              positiv / 14 Tage negativ vorgehalten. Wetterdaten 24 Stunden (heute 3h).
+              positiv / 3 Tage negativ vorgehalten. Wetterdaten 24 Stunden (heute 3h).
             </p>
           </Section>
         </article>

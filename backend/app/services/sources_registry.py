@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session
 from app.services.rausgegangen import sync_rausgegangen
 from app.services.zollverein import sync_zollverein
 from app.services.ruhrpott_kids import sync_ruhrpott_kids
-from app.services.wasgehtapp import sync_wasgehtapp
 from app.services.grugapark import sync_grugapark
 from app.services.borbeck import sync_borbeck  # noqa: F401  (deactivated, see below)
 from app.services.gasometer import sync_gasometer
@@ -50,7 +49,10 @@ SOURCES: list[SourceEntry] = [
     SourceEntry("Zollverein", sync_zollverein, "https://www.zollverein.de/", "api"),
     SourceEntry("Rausgegangen", sync_rausgegangen, "https://www.rausgegangen.de/", "playwright"),
     SourceEntry("Ruhrpott-Kids", sync_ruhrpott_kids, "https://ruhrpottkids.com/", "rss"),
-    SourceEntry("wasgehtapp", sync_wasgehtapp, "https://www.wasgehtapp.de/", "html"),
+    # wasgehtapp.de: removed 2026-09-23. Their data is licensed (JSON-API 30-500 EUR/month,
+    # no storage, only live use) and the site blocks datacenter IPs; scraping it meant
+    # bypassing that block. The app embeds their free official iFrame instead
+    # (frontend WasgehtappFrame).
     SourceEntry("Grugapark", sync_grugapark, "https://www.grugapark.de/", "html"),
     # borbeck.de deactivated 2026-09-20: the RSS feed is local news (sports
     # results, business notes) without dates or categories, not events. It

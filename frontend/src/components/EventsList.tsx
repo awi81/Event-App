@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Event, SortMode } from "@/lib/api";
 import { applyClientFilters, ClientFilters, permanentOffersHiddenByTimeFilters } from "@/lib/filterEvents";
 import { EventCard } from "./EventCard";
+import { WasgehtappFrame } from "./WasgehtappFrame";
 import { TopPicks } from "./TopPicks";
 import { useFavorites } from "@/lib/favorites";
 import { sortCategories } from "@/lib/categories";
@@ -642,6 +643,8 @@ export function EventsList({ events }: EventsListProps) {
           )}
         </div>
       )}
+
+      <WasgehtappFrame />
     </div>
   );
 }
