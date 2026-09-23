@@ -144,6 +144,28 @@ class TestSyncEventsToDb:
         assert rows[0].source_count == 2
         assert "SourceB" in (rows[0].sources_list or "")
 
+    def test_timed_row_merges_into_date_only_row_and_sets_time(self, db_session):
+        """Rausgegangen gives 00:00 (date only), wasgehtapp 19:30 - 19.5h apart."""
+        day = datetime(2026, 9, 25)
+        sync_events_to_db(db_session, [{
+            "canonical_id": "rg_001", "title": "Stahlgipfel", "start_at": day, "source_name": "Rausgegangen",
+        }], "Rausgegangen")
+        stats = sync_events_to_db(db_session, [{
+            "canonical_id": "wga_001", "title": "Stahlgipfel", "start_at": day.replace(hour=19, minute=30),
+            "source_name": "wasgehtapp.de",
+        }], "wasgehtapp.de")
+        assert stats["merged"] == 1
+        row = db_session.query(Event).filter(Event.canonical_id == "rg_001").one()
+        assert (row.start_at.hour, row.start_at.minute) == (19, 30)
+        assert row.source_count == 2
+
+        # a different day is a different performance
+        stats = sync_events_to_db(db_session, [{
+            "canonical_id": "wga_002", "title": "Stahlgipfel", "start_at": datetime(2026, 9, 26, 19, 30),
+            "source_name": "wasgehtapp.de",
+        }], "wasgehtapp.de")
+        assert stats["created"] == 1
+
     def test_dissimilar_events_are_not_merged(self, db_session):
         start = datetime(2026, 4, 15, 19, 0)
         first = [{

@@ -192,3 +192,19 @@ def test_purge_broken_titles_removes_venue_and_label_titles(db_session):
 
     remaining = {e.canonical_id for e in db_session.query(Event).all()}
     assert remaining == {"ok_003", "ok_004", "ok_005"}
+
+
+def test_date_only_row_merges_with_timed_row_of_same_day(db_session):
+    from app.services.cleanup import merge_existing_cross_source_duplicates
+
+    day = (datetime.now(BERLIN) + timedelta(days=3)).replace(tzinfo=None, hour=0, minute=0, second=0, microsecond=0)
+    _add(db_session, "rg_stahl", title="Stahlgipfel", source_name="Rausgegangen", start_at=day)
+    _add(db_session, "wga_stahl", title="Stahlgipfel", source_name="wasgehtapp.de", start_at=day.replace(hour=19, minute=30))
+    _add(db_session, "wga_other_day", title="Stahlgipfel", source_name="wasgehtapp.de", start_at=day + timedelta(days=1, hours=19))
+    db_session.commit()
+
+    assert merge_existing_cross_source_duplicates(db_session) == 1
+    rows = db_session.query(Event).filter(Event.title == "Stahlgipfel").order_by(Event.start_at).all()
+    assert len(rows) == 2
+    assert rows[0].start_at.hour == 19  # the real time survives
+    assert rows[0].source_count == 2

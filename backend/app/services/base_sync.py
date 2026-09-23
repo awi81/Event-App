@@ -97,18 +97,37 @@ def _title_similarity(a: str, b: str) -> float:
     return len(ta & tb) / len(ta | tb)
 
 
+def _date_only(dt: datetime) -> bool:
+    """00:00 = the source gave a date without a time (Rausgegangen, GOP)."""
+    return dt.hour == 0 and dt.minute == 0
+
+
+def same_slot(a: datetime, b: datetime) -> bool:
+    """Could two sources' start times mean the same performance?
+
+    +/- 12h absorbs timezone slips in upstream feeds. A date-only row matches
+    anything on its day: "Stahlgipfel 25.09. 00:00" (Rausgegangen) and
+    "Stahlgipfel 25.09. 19:30" (wasgehtapp) are 19.5h apart.
+    """
+    if _date_only(a) or _date_only(b):
+        return a.date() == b.date()
+    return abs((a - b).total_seconds()) <= 12 * 3600
+
+
 def _find_cross_source_duplicate(
     db: Session, title: str, start_at, source_name: str
 ) -> Event | None:
-    """Find an event from another source on the same day with a similar title.
-
-    Same-day window is +/- 12h to absorb timezone slips in upstream feeds.
-    """
+    """Find an event from another source in the same slot (see same_slot)
+    with a similar title."""
     if not title or not start_at:
         return None
 
-    window_start = start_at - timedelta(hours=12)
-    window_end = start_at + timedelta(hours=12)
+    day_start = datetime.combine(start_at.date(), datetime.min.time())
+    # A minute of slack below midnight: SQLite (tests) compares datetimes as
+    # strings, and raw-inserted "… 00:00:00" sorts before "… 00:00:00.000000".
+    # same_slot() below does the exact check.
+    window_start = min(start_at - timedelta(hours=12), day_start - timedelta(minutes=1))
+    window_end = max(start_at + timedelta(hours=12), day_start + timedelta(days=1))
     candidates = (
         db.query(Event)
         .filter(
@@ -120,7 +139,7 @@ def _find_cross_source_duplicate(
         .all()
     )
     for cand in candidates:
-        if _title_similarity(title, cand.title or "") >= 0.6:
+        if same_slot(start_at, cand.start_at) and _title_similarity(title, cand.title or "") >= 0.6:
             return cand
     return None
 
@@ -202,6 +221,13 @@ def sync_events_to_db(db: Session, events_data: list[dict], source_name: str) ->
                 changed = _record_additional_source(
                     cross, source_name, event_data.get("source_url")
                 )
+                # The row we merge into only had a date; take the real time.
+                start_at = event_data.get("start_at")
+                if start_at and _date_only(cross.start_at) and not _date_only(start_at):
+                    cross.start_at = start_at
+                    if cross.end_at is None and event_data.get("end_at"):
+                        cross.end_at = event_data["end_at"]
+                    changed = True
                 if changed:
                     db.add(cross)
                     db.commit()

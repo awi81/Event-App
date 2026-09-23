@@ -183,12 +183,12 @@ def merge_existing_cross_source_duplicates(db: Session | None = None) -> int:
     The base_sync cross-source merge only fires on INSERT, so events that were
     already in the DB before the dedup logic improved stay duplicated. Iterate
     over active events and merge pairs with similar titles (Jaccard >= 0.6) and
-    start_at within a 12h window but DIFFERENT source_name.
+    the same slot (base_sync.same_slot) but DIFFERENT source_name.
 
     Keeps the event with higher source_count (or lower id as tiebreaker) and
     appends the other source_name to its sources_list.
     """
-    from app.services.base_sync import _title_similarity
+    from app.services.base_sync import _date_only, _title_similarity, same_slot
 
     close_after = False
     if db is None:
@@ -216,18 +216,22 @@ def merge_existing_cross_source_duplicates(db: Session | None = None) -> int:
                     continue
                 if a.source_name == b.source_name:
                     continue
-                # start_at must be within 12h
-                if abs((a.start_at - b.start_at).total_seconds()) > 12 * 3600:
-                    # events are sorted by start_at, so once b is too far in
-                    # the future we can stop comparing a to anything later.
-                    if b.start_at > a.start_at:
-                        break
+                # events are sorted by start_at: once b is more than a day
+                # later, nothing after it can share a's slot.
+                if (b.start_at - a.start_at).total_seconds() > 24 * 3600:
+                    break
+                if not same_slot(a.start_at, b.start_at):
                     continue
                 if _title_similarity(a.title or "", b.title or "") < 0.6:
                     continue
 
-                # Decide which one to keep
-                keep, drop = (a, b) if (a.source_count or 1) >= (b.source_count or 1) else (b, a)
+                # Keep the better-sourced row; on a tie the one with a real time.
+                rank = lambda e: (e.source_count or 1, not _date_only(e.start_at))  # noqa: E731
+                keep, drop = (a, b) if rank(a) >= rank(b) else (b, a)
+                if _date_only(keep.start_at) and not _date_only(drop.start_at):
+                    keep.start_at = drop.start_at
+                    if keep.end_at is None:
+                        keep.end_at = drop.end_at
 
                 # Append the dropped source to the keeper's sources_list
                 current = (keep.sources_list or "").split(",") if keep.sources_list else []
