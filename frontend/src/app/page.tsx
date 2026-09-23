@@ -28,7 +28,7 @@ export default function Home() {
       <footer className="mt-auto border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-6">
         <div className="mx-auto max-w-7xl px-4 text-center text-sm text-gray-500 dark:text-gray-400">
           <p>
-            Event-App Essen • 19 Quellen aus Essen und Umgebung
+            Event-App Essen • Veranstaltungen aus Essen und Umgebung
             {process.env.NEXT_PUBLIC_STATIC_BUILD !== "true" && (
               <>
                 {" • "}
