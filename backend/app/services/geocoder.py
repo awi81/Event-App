@@ -26,6 +26,15 @@ if _CONTACT == "your-email@example.com":
 NOMINATIM_USER_AGENT = f"Event-App-Essen/1.0 (+{_CONTACT})"
 
 
+# Every source covers the Ruhr area around Essen. A hit outside this box is a
+# namesake: venue "Essen" resolved to Essen (Oldenburg), 160 km north.
+_REGION = {"south": 51.0, "north": 51.9, "west": 6.3, "east": 7.9}
+
+
+def in_region(lat: float, lon: float) -> bool:
+    return _REGION["south"] <= lat <= _REGION["north"] and _REGION["west"] <= lon <= _REGION["east"]
+
+
 class GeocodeUnavailable(Exception):
     """Nominatim did not answer properly (429/5xx/timeout). Not a "not found":
     callers must not cache this as a negative result."""
@@ -76,7 +85,9 @@ async def geocode_address(address: str, city: str = "Essen") -> Optional[Tuple[f
                     "q": query,
                     "format": "json",
                     "limit": 1,
-                    "addressdetails": 0
+                    "addressdetails": 0,
+                    "viewbox": f"{_REGION['west']},{_REGION['north']},{_REGION['east']},{_REGION['south']}",
+                    "bounded": 1,
                 },
                 headers={
                     "User-Agent": NOMINATIM_USER_AGENT,
@@ -92,7 +103,8 @@ async def geocode_address(address: str, city: str = "Essen") -> Optional[Tuple[f
     try:
         data = response.json()
         if data:
-            return (float(data[0]["lat"]), float(data[0]["lon"]))
+            lat, lon = float(data[0]["lat"]), float(data[0]["lon"])
+            return (lat, lon) if in_region(lat, lon) else None
     except (ValueError, KeyError, TypeError) as exc:
         raise GeocodeUnavailable(f"bad payload: {exc}") from exc
     return None
@@ -107,6 +119,9 @@ async def geocode_event_venue(venue_name: Optional[str], address_text: Optional[
     # ", {city}, Germany" itself). Raises GeocodeUnavailable on service errors.
     candidates: list[str] = []
     cleaned = clean_venue_name(venue_name or "")
+    if cleaned.lower() == (city or "").lower():
+        # Venue "Essen" in city Essen says nothing about the place.
+        venue_name, cleaned = None, ""
 
     # A street address with a house number beats a bare venue name: "Zentrum
     # 60plus, Essen" resolves to one of several houses of that name across the

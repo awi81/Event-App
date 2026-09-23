@@ -133,3 +133,34 @@ async def test_throttling_stops_geocoding_immediately(db_session, monkeypatch):
     monkeypatch.setattr(pipeline, "geocode_event_venue", throttled)
     await pipeline.geocode_pending_events(db_session)
     assert len(calls) == 1
+
+
+@pytest.mark.asyncio
+async def test_venue_equal_to_city_is_not_geocoded(monkeypatch):
+    queries = []
+
+    async def fake_geocode_address(query, city="Essen"):
+        queries.append(query)
+        return None
+
+    monkeypatch.setattr(geocoder, "geocode_address", fake_geocode_address)
+    assert await geocode_event_venue("Essen", None, "Essen") is None
+    assert queries == []
+
+
+def test_region_check_rejects_namesakes_and_cached_outliers(db_session):
+    from app.services.geocode_cache import get_cached_geocode, import_cache, store_geocode
+    from app.services.geocoder import in_region
+
+    assert in_region(51.45, 7.01)  # Essen
+    assert in_region(51.61, 7.19)  # Recklinghausen
+    assert not in_region(52.72, 7.95)  # Essen (Oldenburg)
+
+    store_geocode(db_session, "essen||essen", 52.7234288, 7.9454061)
+    assert get_cached_geocode(db_session, "essen||essen") is None
+
+    n = import_cache(db_session, [
+        {"query": "oldenburg||x", "lat": 52.72, "lon": 7.95, "fetched_at": "2026-09-20T10:00:00+00:00"},
+        {"query": "zeche carl||essen", "lat": 51.47, "lon": 6.99, "fetched_at": "2026-09-20T10:00:00+00:00"},
+    ])
+    assert n == 1

@@ -5,6 +5,7 @@ from datetime import datetime, timezone, timedelta
 from sqlalchemy.orm import Session
 
 from app.models.cache import GeocodeCache
+from app.services.geocoder import in_region
 
 
 # Negative results expire faster so a flaky Nominatim answer doesn't get stuck
@@ -36,6 +37,8 @@ def get_cached_geocode(db: Session, query: str) -> Optional[Tuple[Optional[float
     ttl = POSITIVE_TTL if is_positive else NEGATIVE_TTL
     if age > ttl:
         return None
+    if is_positive and not in_region(row.lat, row.lon):
+        return None  # namesake hit from before the region check: look it up again
     return (row.lat, row.lon)
 
 
@@ -77,6 +80,9 @@ def import_cache(db: Session, rows: list[dict]) -> int:
             continue
         if fetched_at.tzinfo is None:
             fetched_at = fetched_at.replace(tzinfo=timezone.utc)
+        lat, lon = r.get("lat"), r.get("lon")
+        if lat is not None and lon is not None and not in_region(lat, lon):
+            continue
         if db.query(GeocodeCache).filter(GeocodeCache.query == key).first():
             continue
         db.add(GeocodeCache(query=key, lat=r.get("lat"), lon=r.get("lon"), fetched_at=fetched_at))
