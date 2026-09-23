@@ -25,6 +25,8 @@ from app.services.quality import recompute_all_quality_scores
 
 logger = logging.getLogger(__name__)
 
+_MAX_GEOCODE_FAILURES = 3
+
 
 async def run_source_sync(entry: SourceEntry, db: Session) -> dict:
     """Run one source's sync and persist a CrawlRun row.
@@ -86,6 +88,9 @@ async def geocode_pending_events(db: Session, max_nominatim_calls: int = 100) ->
     updated = 0
     nominatim_calls = 0
     service_down = False
+    # One read timeout is noise; three in a row or an explicit 403/429 means
+    # Nominatim is down or throttling us, and hammering on helps nobody.
+    consecutive_failures = 0
 
     for event in pending:
         # 1. Known venue fast-path
@@ -127,14 +132,19 @@ async def geocode_pending_events(db: Session, max_nominatim_calls: int = 100) ->
             )
         except GeocodeUnavailable as e:
             # Throttled or Nominatim down: this is not "address unknown", so
-            # never cache it as a miss — and stop hammering for this run.
-            logger.warning(f"Nominatim unavailable, stopping geocoding for this run: {e}")
-            service_down = True
+            # never cache it as a miss.
+            consecutive_failures += 1
+            if str(e).startswith(("HTTP 403", "HTTP 429")) or consecutive_failures >= _MAX_GEOCODE_FAILURES:
+                logger.warning(f"Nominatim unavailable, stopping geocoding for this run: {e}")
+                service_down = True
+            else:
+                logger.info(f"Nominatim hiccup ({consecutive_failures}/{_MAX_GEOCODE_FAILURES}), continuing: {e}")
             continue
         except Exception as e:
             logger.debug(f"Nominatim error: {e}")
             continue
 
+        consecutive_failures = 0
         if result:
             event.lat, event.lon = result
             store_geocode(db, query, result[0], result[1])

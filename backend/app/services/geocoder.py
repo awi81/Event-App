@@ -108,13 +108,21 @@ async def geocode_event_venue(venue_name: Optional[str], address_text: Optional[
     candidates: list[str] = []
     cleaned = clean_venue_name(venue_name or "")
 
+    # A street address with a house number beats a bare venue name: "Zentrum
+    # 60plus, Essen" resolves to one of several houses of that name across the
+    # city, "Heckstraße 27, Essen" to the right one. Vague addresses without a
+    # number stay last so they don't win with a city/district centroid.
+    precise_address = bool(address_text and re.search(r"\d", address_text))
+
     if venue_name and address_text:
         candidates.append(f"{venue_name}, {address_text}")
+    if precise_address:
+        candidates.append(address_text)
     if venue_name:
         candidates.append(venue_name)
     if cleaned and cleaned.lower() != (venue_name or "").lower():
         candidates.append(cleaned)
-    if address_text:
+    if address_text and not precise_address:
         candidates.append(address_text)
 
     seen: set[str] = set()
