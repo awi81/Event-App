@@ -8,6 +8,7 @@ import hashlib
 import logging
 
 from app.services.base_sync import sync_events_to_db
+from app.services.crawler_ua import CRAWLER_USER_AGENT
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,7 @@ async def fetch_borbeck_events() -> List[Dict]:
     """Fetch events from borbeck.de RSS feed."""
     try:
         response = httpx.get(BORBECK_RSS, timeout=30.0, headers={
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            "User-Agent": CRAWLER_USER_AGENT
         })
         response.raise_for_status()
         return parse_rss_feed(response.text)

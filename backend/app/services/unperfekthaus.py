@@ -7,6 +7,7 @@ import re
 import logging
 
 from app.services.base_sync import sync_events_to_db
+from app.services.crawler_ua import CRAWLER_USER_AGENT
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ async def fetch_unperfekthaus_events() -> List[Dict]:
 
         async with async_playwright() as p:
             browser = await p.chromium.launch(headless=True)
-            page = await browser.new_page()
+            page = await browser.new_page(user_agent=CRAWLER_USER_AGENT)
 
             try:
                 # Try the calendar page

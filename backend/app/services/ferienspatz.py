@@ -34,6 +34,7 @@ from bs4 import BeautifulSoup
 from sqlalchemy.orm import Session
 
 from app.services.base_sync import sync_events_to_db
+from app.services.crawler_ua import CRAWLER_USER_AGENT
 
 logger = logging.getLogger(__name__)
 
@@ -48,11 +49,7 @@ MAX_PAGES = 40
 MAX_DETAIL_FETCHES = 160
 
 _HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/120.0.0.0 Safari/537.36"
-    ),
+    "User-Agent": CRAWLER_USER_AGENT,
     "Accept-Language": "de-DE,de;q=0.9",
 }
 

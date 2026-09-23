@@ -9,6 +9,8 @@ import re
 import logging
 
 from app.services.base_sync import sync_events_to_db
+from app.services.crawler_ua import CRAWLER_USER_AGENT
+from app.services.crawler_ua import CRAWLER_USER_AGENT
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +46,7 @@ async def fetch_with_playwright() -> List[Dict]:
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
-        page = await browser.new_page()
+        page = await browser.new_page(user_agent=CRAWLER_USER_AGENT)
 
         try:
             await page.goto(GASOMETER_URL, wait_until="networkidle", timeout=20000)
@@ -63,7 +65,7 @@ async def fetch_with_playwright() -> List[Dict]:
 async def fetch_with_http() -> List[Dict]:
     """Fallback HTTP fetch."""
     async with httpx.AsyncClient(timeout=20.0, follow_redirects=True, headers={
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        "User-Agent": CRAWLER_USER_AGENT
     }) as client:
         try:
             response = await client.get(GASOMETER_URL)

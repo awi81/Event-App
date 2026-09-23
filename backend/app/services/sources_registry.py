@@ -6,7 +6,6 @@ and any future tooling. Adding a new source means appending one entry here.
 from typing import Awaitable, Callable, NamedTuple
 from sqlalchemy.orm import Session
 
-from app.services.rausgegangen import sync_rausgegangen
 from app.services.zollverein import sync_zollverein
 from app.services.ruhrpott_kids import sync_ruhrpott_kids
 from app.services.grugapark import sync_grugapark
@@ -47,7 +46,9 @@ class SourceEntry(NamedTuple):
 
 SOURCES: list[SourceEntry] = [
     SourceEntry("Zollverein", sync_zollverein, "https://www.zollverein.de/", "api"),
-    SourceEntry("Rausgegangen", sync_rausgegangen, "https://www.rausgegangen.de/", "playwright"),
+    # Rausgegangen: removed 2026-09-23. Their terms (AGB IX, 10.11.2025) expressly forbid
+    # scraping/crawlers/bots and reserve TDM (§ 44b UrhG); the site 403s any identified
+    # client, so crawling it meant posing as a browser. No public API or widget.
     SourceEntry("Ruhrpott-Kids", sync_ruhrpott_kids, "https://ruhrpottkids.com/", "rss"),
     # wasgehtapp.de: removed 2026-09-23. Their data is licensed (JSON-API 30-500 EUR/month,
     # no storage, only live use) and the site blocks datacenter IPs; scraping it meant

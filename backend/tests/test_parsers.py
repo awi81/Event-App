@@ -22,12 +22,6 @@ from app.services.grugapark import (
 )
 from app.services.seaside_beach import parse_seaside_html
 from app.services.waddische import parse_waddische_html
-from app.services.rausgegangen import (
-    parse_rausgegangen_html,
-    parse_german_date,
-    parse_iso_date,
-    extract_events_from_text as rg_text_extract,
-)
 from app.services.zollverein import (
     parse_zollverein_api,
     parse_zollverein_date,
@@ -314,57 +308,6 @@ def test_waddische_infers_nearest_year():
     assert _infer_year(28, 12, datetime(2027, 1, 3)).year == 2026
 
 
-# ─────────────────────────────── Rausgegangen ───────────────────────────────
-
-
-def test_rausgegangen_json_ld_extracts_event():
-    html = """
-    <html><head>
-      <script type="application/ld+json">
-      {
-        "@type": "Event",
-        "name": "Open Air am Aalto",
-        "startDate": "2026-07-15T19:30:00",
-        "description": "Sommer-Konzert mit Special Guests.",
-        "url": "https://www.rausgegangen.de/events/open-air/",
-        "location": {
-          "name": "Aalto-Theater",
-          "address": {"streetAddress": "Opernplatz 10"},
-          "geo": {"latitude": 51.4516, "longitude": 7.0133}
-        }
-      }
-      </script>
-    </head><body></body></html>
-    """
-    events = parse_rausgegangen_html(html, "essen")
-    assert len(events) == 1
-    e = events[0]
-    assert e["title"] == "Open Air am Aalto"
-    assert e["lat"] == 51.4516
-    assert e["venue_name"] == "Aalto-Theater"
-    assert e["source_name"] == "Rausgegangen"
-
-
-def test_rausgegangen_parses_german_date():
-    d = parse_german_date("Do, 19. Mär | 19:00")
-    assert d is not None and d.month == 3 and d.day == 19
-
-
-def test_rausgegangen_iso_date_with_z():
-    d = parse_iso_date("2026-06-01T20:00:00Z")
-    assert d is not None and d.year == 2026 and d.day == 1
-
-
-def test_rausgegangen_text_extractor_finds_event():
-    text = """
-Do, 19. Mär | 19:00
-Konzert im Goethebunker
-Goethebunker
-""".strip()
-    events = rg_text_extract(text, "essen")
-    assert any("Konzert" in e["title"] for e in events)
-
-
 # ──────────────────────────────── Zollverein ────────────────────────────────
 #
 # The upstream events.zollverein.de/api/v1/ API 403s on every request (an
@@ -627,13 +570,6 @@ def test_to_berlin_naive_keeps_naive_unchanged():
 def test_to_berlin_naive_handles_none():
     from app.services.base_sync import to_berlin_naive
     assert to_berlin_naive(None) is None
-
-
-def test_rausgegangen_iso_date_returns_naive():
-    from app.services.rausgegangen import parse_iso_date
-    result = parse_iso_date("2026-06-01T17:00:00Z")
-    assert result is not None
-    assert result.tzinfo is None
 
 
 def test_zollverein_cap_occurrences_limits_daily_exhibitions():

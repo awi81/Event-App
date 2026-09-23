@@ -17,6 +17,7 @@ from bs4 import BeautifulSoup
 from sqlalchemy.orm import Session
 
 from app.services.base_sync import sync_events_to_db
+from app.services.crawler_ua import CRAWLER_USER_AGENT
 
 logger = logging.getLogger(__name__)
 
@@ -45,11 +46,7 @@ CAMPUS_WERDEN_ADDRESS = "Klemensborn 39, 45239 Essen"
 CAMPUS_ZOLLVEREIN_ADDRESS = "Gelsenkirchener Str. 209, 45309 Essen"
 
 _HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/120.0.0.0 Safari/537.36"
-    )
+    "User-Agent": CRAWLER_USER_AGENT
 }
 
 # German month abbreviations as rendered by calendarize ("Sep", "Mär", ...),
