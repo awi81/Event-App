@@ -230,6 +230,91 @@ def test_waddische_skips_meta_lines():
     assert any("Lesung" in t for t in titles)
 
 
+# Live markup (2026-09): .entry-content sits inside #content > article. The old
+# parser matched '#content' first and found 0 events for months.
+_WADDISCHE_LIVE_HTML = """
+<html><body><div id="content" class="site-content">
+ <article class="page"><div class="entry-content">
+  <h1>Tipps • Treffs • Termine</h1>
+  <h3>Treffs, Kurse und Workshops</h3>
+  <h4>Freitag, 18. September</h4>
+  <p><strong>11.45 bis 13.45 Uhr und 14 bis 16 Uhr:</strong> Aquarellkurs, Zentrum 60plus. Bitte anmelden.</p>
+  <p><strong>10 bis 12 Uhr:</strong> Tourist Information, Zentrum 60plus.</p>
+  <p><strong>14.30 bis 16 Uhr:</strong> Mitmachtanzen „Florence“: Blocktanz, Linedance und Folkdance im Pfarrsaal der Kirche Christi Himmelfahrt, Lürsweg 43a.</p>
+  <h4>Dienstag, 22. September</h4>
+  <p><strong>14 bis 17.30 Uhr:</strong> Offener Treff der Awo Werden.</p>
+  <h3>Kinder und Jugend</h3>
+  <h4>Donnerstag, 24. September</h4>
+  <p><strong>16 bis 19 Uhr:</strong> Offener Kinder- und Jugendtreff, Jubb.</p>
+  <h3>Bühne und Musik</h3>
+  <h4>Sonntag, 20. September</h4>
+  <p><strong>17 Uhr:</strong> Elternzeit-Konzerte: „Große Musik – kleinerer Kreis“. Memela Alija mit Werken von Frédéric Chopin, Edvard Grieg, Alberto Ginastera und Fazıl Say.</p>
+  <h4>Mittwoch, 23. September</h4>
+  <p><strong>15 bis 17 Uhr:</strong> Literaturcafé: „Im Schnee“ von Tommie Goertz, Teil 1 von 2, Bürgermeisterhaus, 12 Euro. Bitte anmelden.</p>
+  <h3>Ausstellungen</h3>
+  <p>Klaus Micke: „What You See is What You See“</p>
+  <h3>Adressen und Kontakte</h3>
+  <p>Awo Werden</p>
+  <p>Keller des Rathauses Werden, Eingang Brückstraße Tel. 0201/49 30 62</p>
+  <p>Bürgermeisterhaus</p>
+  <p>Heckstraße 105 Tel. 0201/49 32 86 E-Mail: info@example.org</p>
+  <p>Jugend- und Bürgerbegegnungszentrum (Jubb)</p>
+  <p>Wesselswerth 10 Tel. 0201/88 511 49</p>
+  <p>Zentrum 60plus</p>
+  <p>Heckstraße 27 Infos und Anmeldungen: Tel. 0201/8474-270</p>
+  <h3>Apothekennotdienst</h3>
+  <h4>Freitag, 18. September</h4>
+  <p>Löwen-Apotheke, Brückstraße 1, Tel. 0201/49 00 00.</p>
+ </div></article>
+</div></body></html>
+"""
+
+
+def test_waddische_parses_live_markup():
+    events = parse_waddische_html(_WADDISCHE_LIVE_HTML, now=datetime(2026, 9, 23, 12))
+    by_title = {}
+    for e in events:
+        by_title.setdefault(e["title"], []).append(e)
+
+    aquarell = by_title["Aquarellkurs"]
+    assert [(e["start_at"].hour, e["start_at"].minute, e["end_at"].hour) for e in aquarell] == [(11, 45, 13), (14, 0, 16)]
+    assert aquarell[0]["start_at"].date().isoformat() == "2026-09-18"
+    assert aquarell[0]["venue_name"] == "Zentrum 60plus"
+    assert aquarell[0]["address_text"] == "Heckstraße 27"
+
+    tanz = by_title["Mitmachtanzen „Florence“: Blocktanz"][0]
+    assert tanz["venue_name"] == "Pfarrsaal der Kirche Christi Himmelfahrt"
+    assert tanz["address_text"] == "Lürsweg 43a"
+
+    assert by_title["Offener Treff der Awo Werden"][0]["venue_name"] == "Awo Werden"
+
+    treff = by_title["Offener Kinder- und Jugendtreff"][0]
+    assert treff["kids_suitable"] == "yes"
+    assert treff["address_text"] == "Wesselswerth 10"
+
+    konzert = by_title["Elternzeit-Konzerte: „Große Musik – kleinerer Kreis“"][0]
+    assert konzert["venue_name"] is None
+    assert konzert["end_at"] is None
+
+    cafe = by_title["Literaturcafé: „Im Schnee“ von Tommie Goertz"][0]
+    assert cafe["venue_name"] == "Bürgermeisterhaus"
+    assert cafe["address_text"] == "Heckstraße 105"
+    assert cafe["price_text"] == "12 Euro"
+
+    # Notdienst / Ausstellungen / Adressen are not events
+    assert not any("Apotheke" in t or "Micke" in t or "Heckstraße" in t for t in by_title)
+    assert len(events) == 7
+    assert len({e["canonical_id"] for e in events}) == 7
+
+
+def test_waddische_infers_nearest_year():
+    from app.services.waddische import _infer_year
+
+    assert _infer_year(18, 9, datetime(2026, 9, 23)).year == 2026
+    assert _infer_year(2, 1, datetime(2026, 12, 28)).year == 2027
+    assert _infer_year(28, 12, datetime(2027, 1, 3)).year == 2026
+
+
 # ─────────────────────────────── Rausgegangen ───────────────────────────────
 
 
@@ -736,3 +821,13 @@ def test_zollverein_cap_occurrences_limits_daily_exhibitions():
     kept = cap_occurrences(daily + single, limit=60)
     assert len(kept) == 61
     assert max(e["start_at"] for e in kept if e["source_url"] == "https://z/a") == base + _td(days=59)
+
+
+def test_zollverein_day_heading_accepts_german_and_english_months():
+    from datetime import date
+
+    from app.services.zollverein import _parse_german_day_heading
+
+    assert _parse_german_day_heading("Veranstaltungen am Sonntag, September 20, 2026") == date(2026, 9, 20)
+    assert _parse_german_day_heading("Veranstaltungen am Samstag, October 3, 2026") == date(2026, 10, 3)
+    assert _parse_german_day_heading("Veranstaltungen am Samstag, Oktober 3, 2026") == date(2026, 10, 3)

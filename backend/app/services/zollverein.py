@@ -38,6 +38,7 @@ import logging
 import re
 from datetime import date, datetime, timedelta
 from typing import Dict, List, Optional
+from zoneinfo import ZoneInfo
 
 import httpx
 
@@ -78,6 +79,17 @@ _GERMAN_MONTHS = {
     "juli": 7, "august": 8, "september": 9, "oktober": 10, "november": 11,
     "dezember": 12,
 }
+# The SSR day heading mixes a German weekday with a US-style "Month D, YYYY";
+# accept English month names too in case the month part is not localised.
+_GERMAN_MONTHS.update({
+    "january": 1, "february": 2, "march": 3, "may": 5, "june": 6, "july": 7,
+    "october": 10, "december": 12,
+})
+
+
+def _today_berlin() -> date:
+    # GitHub runners are on UTC; the calendar window is Berlin days.
+    return datetime.now(ZoneInfo("Europe/Berlin")).date()
 
 
 async def _fetch_day(client: httpx.AsyncClient, day: date) -> dict:
@@ -92,7 +104,7 @@ async def fetch_zollverein_events() -> List[Dict]:
     calendar day API. Falls back to HTML scraping (1-2 days only) if the
     JSON route is unreachable for the whole window.
     """
-    today = datetime.now().date()
+    today = _today_berlin()
     all_days = [today + timedelta(days=i) for i in range(SYNC_WINDOW_DAYS + 1)]
     sem = asyncio.Semaphore(_DAY_CONCURRENCY)
 
@@ -388,7 +400,7 @@ def extract_zollverein_event(item, day: Optional[date] = None) -> Optional[Dict]
         href = link_elem.get("href", "") if link_elem else ""
         source_url = f"https://www.zollverein.de{href}" if href else None
 
-        effective_day = day or datetime.now().date()
+        effective_day = day or _today_berlin()
         canonical_id = hashlib.md5(
             f"zollverein_{href or title}_{effective_day.isoformat()}".encode()
         ).hexdigest()[:16]
