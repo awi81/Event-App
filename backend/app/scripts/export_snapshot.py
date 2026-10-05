@@ -89,30 +89,33 @@ def _collect_event_rows(db, limit: int):
 
     Mirrors the base filter of ``GET /events`` exactly, but without the
     date-range / category / search narrowing -- the client applies those
-    client-side against the visitor's clock. The ``>= now`` bound only keeps
-    the dataset from carrying genuinely-past rows; events that pass between
-    export and page-load are re-hidden client-side.
+    client-side against the visitor's clock. Rows that are over (see
+    ``cleanup.effective_end``) are left out; a running exhibition or an
+    all-day row of today stays. Events that end between export and page-load
+    are re-hidden client-side.
     """
     from sqlalchemy import or_
 
     from app.models.event import Event
+    from app.services.cleanup import is_over
 
     now_naive = datetime.now(BERLIN).replace(tzinfo=None)
+    today_start = datetime.combine(now_naive.date(), datetime.min.time())
     query = (
         db.query(Event)
         .filter(Event.archived_at.is_(None))
         .filter(
             or_(
                 Event.start_at.is_(None),
-                Event.start_at >= now_naive,
+                Event.start_at >= today_start,
+                Event.end_at >= now_naive,
                 Event.is_permanent_offer == True,  # noqa: E712 (SQLAlchemy needs ==)
             )
         )
         .order_by(Event.start_at.asc().nullslast())
     )
-    if limit:
-        query = query.limit(limit)
-    return query.all()
+    rows = [r for r in query.all() if not is_over(r, now_naive)]
+    return rows[:limit] if limit else rows
 
 
 def _build_events_payload(rows) -> list[dict]:
