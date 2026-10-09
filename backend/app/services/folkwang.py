@@ -98,7 +98,7 @@ def parse_folkwang_text(text: str) -> List[Dict]:
             continue
 
         # Match time + title block: "10:00 – 18:00" or "14:30"
-        time_match = re.match(r'^(\d{1,2}):(\d{2})', line)
+        time_match = re.match(r'^(\d{1,2}):(\d{2})(?:\s*[–—-]\s*(\d{1,2}):(\d{2}))?', line)
 
         if time_match and current_date:
             hour = int(time_match.group(1))
@@ -106,13 +106,21 @@ def parse_folkwang_text(text: str) -> List[Dict]:
             year, month, day = current_date
 
             start_at = None
+            end_at = None
             try:
                 start_at = datetime(year, month, day, hour, minute)
+                if time_match.group(3):
+                    end_at = datetime(
+                        year, month, day, int(time_match.group(3)), int(time_match.group(4))
+                    )
+                    if end_at <= start_at:
+                        end_at = None
             except ValueError:
                 i += 1
                 continue
 
-            if start_at < datetime.now():
+            # Exhibitions ("10:00 – 18:00") stay visible until closing time
+            if (end_at or start_at) < datetime.now():
                 i += 1
                 continue
 
@@ -149,6 +157,7 @@ def parse_folkwang_text(text: str) -> List[Dict]:
                     "canonical_id": canonical_id,
                     "title": display_title[:200],
                     "start_at": start_at,
+                    "end_at": end_at,
                     "venue_name": "Museum Folkwang",
                     "city": "Essen",
                     "lat": FOLKWANG_LAT,

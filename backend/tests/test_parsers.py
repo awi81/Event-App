@@ -541,6 +541,44 @@ Führung
     assert e["indoor_outdoor"] == "indoor"
 
 
+def test_folkwang_time_range_sets_end_at():
+    future = datetime.now() + timedelta(days=40)
+    months = ["", "JANUAR", "FEBRUAR", "MÄRZ", "APRIL", "MAI", "JUNI",
+              "JULI", "AUGUST", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DEZEMBER"]
+    text = f"""
+DIENSTAG, {future.day}. {months[future.month]} {future.year}
+10:00 – 18:00
+NEUE WELTEN
+Ausstellung
+""".strip()
+    events = parse_folkwang_text(text)
+    assert len(events) == 1
+    assert events[0]["start_at"].hour == 10
+    assert events[0]["end_at"] == events[0]["start_at"].replace(hour=18)
+
+
+def test_folkwang_open_exhibition_kept_until_closing(monkeypatch):
+    import app.services.folkwang as folkwang
+
+    class FakeNow(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return datetime(2026, 10, 10, 14, 0)
+
+    monkeypatch.setattr(folkwang, "datetime", FakeNow)
+    text = """
+SAMSTAG, 10. OKTOBER 2026
+10:00 – 18:00
+NEUE WELTEN
+Ausstellung
+11:00 – 12:00
+Vorbei
+Führung
+""".strip()
+    events = folkwang.parse_folkwang_text(text)
+    assert [e["title"] for e in events] == ["NEUE WELTEN (Ausstellung)"]
+
+
 def test_folkwang_no_match_without_date_header():
     text = "14:30\nIrgendwas\nOhne Datum\n"
     events = parse_folkwang_text(text)
