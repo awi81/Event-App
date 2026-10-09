@@ -71,6 +71,15 @@ jobs:
           NOMINATIM_CONTACT: ${{ secrets.NOMINATIM_CONTACT }}
         run: python -m app.scripts.export_snapshot
 
+      # A push to main during the crawl would make the snapshot push fail
+      # (non-fast-forward). Only this job writes the snapshot files and the
+      # concurrency group serialises runs, so the rebase cannot conflict.
+      - name: Catch up with main
+        run: >-
+          git -c user.name=github-actions[bot]
+          -c user.email=github-actions[bot]@users.noreply.github.com
+          pull --rebase --autostash origin main
+
       - name: Commit snapshot if changed
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
