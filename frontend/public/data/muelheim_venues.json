@@ -1,0 +1,94 @@
+{
+ "entries": {
+  "/veranstaltungen/arian_irsula_zeigt_materia_pott_-_der_andere_blick_auf_das_ruhrgebiet": {
+   "venue_name": "MMKM Museum Moderne Kunst Mülheim",
+   "address_text": "Ruhrstraße 3, 45468 Mülheim an der Ruhr",
+   "postal": "45468",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/4/4/3/6/5/pic_1785340288_44365b2cfd274d7f4a599cf880b3ce81_t0.png",
+   "fetched": "2026-10-21"
+  },
+  "/veranstaltungen/ausstellung_gemalt_mit_natuerlicher_intelligenz_kunstkreis_peter_kempf": {
+   "venue_name": "Begegnungsstätte Feldmann-Stiftung | Saal | Ausstellung",
+   "address_text": "Augustastraße 108-114, 45476 Mülheim an der Ruhr",
+   "postal": "45476",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/5/1/d/8/f/pic_1791975428_51d8f634401830068946a9319d2e9d1a_t0.jpeg",
+   "fetched": "2026-10-21"
+  },
+  "/veranstaltungen/faszination_schach_im_rhein-ruhr_zentrum": {
+   "venue_name": "Rhein-Ruhr Zentrum Mülheim (RRZ)",
+   "address_text": "Humboldtring 13, 45472 Mülheim an der Ruhr",
+   "postal": "45472",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/e/1/7/f/3/pic_1790668377_e17f351116d9a36dbada0ae27dd9abda_t0.jpeg",
+   "fetched": "2026-10-21"
+  },
+  "/veranstaltungen/film_ab_-_dein_herbst_vor_der_kamera": {
+   "venue_name": "Theater an der Ruhr",
+   "address_text": "Akazienallee 61, 45478 Mülheim an der Ruhr",
+   "postal": "45478",
+   "lat": null,
+   "lon": null,
+   "image_url": "",
+   "fetched": "2026-10-21"
+  },
+  "/veranstaltungen/gjakmarrje_-_in_the_blood._fotografien_von_birte_kaufmann": {
+   "venue_name": "Camera Obscura Mülheim an der Ruhr",
+   "address_text": "Am Schloß Broich 42, 45479 Mülheim an der Ruhr",
+   "postal": "45479",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/0/6/6/8/a/pic_1787226113_0668adcaec7eda865c5c329d73ded4e1_t0.jpeg",
+   "fetched": "2026-10-21"
+  },
+  "/veranstaltungen/im_garten_der_kunst_marc_macke_heckel_jawlensky._die_sammlung_karl_und_maria_ziegler_teil_2": {
+   "venue_name": "Kunstmuseum Mülheim an der Ruhr",
+   "address_text": "Synagogenplatz 1, 45468 Mülheim an der Ruhr",
+   "postal": "45468",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/7/f/8/0/0/pic_1767607094_7f8004211278247c646230ca2dbf31ad_t0.jpeg",
+   "fetched": "2026-10-21"
+  },
+  "/veranstaltungen/instrumente_der_musikgeschichte_mit_ralf_schreiber_esther_rosiny-wieland_herbstferienworkshop_fuer_10-14-jaehrige": {
+   "venue_name": "Ringlokschuppen Ruhr",
+   "address_text": "Am Schloß Broich 38, 45479 Mülheim an der Ruhr",
+   "postal": "45479",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/5/d/8/1/f/pic_1780397840_5d81fc3bb05dddecc09748af255dfd74_t0.jpeg",
+   "fetched": "2026-10-21"
+  },
+  "/veranstaltungen/praesentation_des_mittelalterlichen_koeln_in_der_stadt_muelheim_-_kunstmuseum_mmkm_ruhrstrasse_3_-_ecke_delle_im_innenstadtpark_ruhranlage": {
+   "venue_name": "MMKM Museum Moderne Kunst Mülheim",
+   "address_text": "Ruhrstr. 3, Ecke Delle - Ruhranlage, 45468 Mülheim an der Ruhr",
+   "postal": "45468",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/2/7/7/9/6/pic_1786514494_27796f10dc1cdd5046a63ccd76eafae7_t0.png",
+   "fetched": "2026-10-21"
+  },
+  "/veranstaltungen/unsere_besten_-_ausstellung_der_kuenstlergruppe_kunstfeld": {
+   "venue_name": "Versammlungsraum Begegnungsstätte Kloster Saarn",
+   "address_text": "Klosterstraße 53, 45481 Mülheim an der Ruhr",
+   "postal": "45481",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/3/3/9/5/e/pic_1790679749_3395e5008f8a5fcb91e8564542addebe_t0.jpeg",
+   "fetched": "2026-10-21"
+  },
+  "/veranstaltungen/wir_lesen_eine_geschichte": {
+   "venue_name": "Schul- und Stadtteilbibliothek Styrum",
+   "address_text": "Willy-Brandt-Platz 2 (Eingang über Von-der-Tann-Straße), 45476 Mülheim an der Ruhr",
+   "postal": "45476",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/3/5/4/1/9/pic_1772113765_35419b87dd241dc097ceefd13ac545db_t0.png",
+   "fetched": "2026-10-21"
+  }
+ }
+}
