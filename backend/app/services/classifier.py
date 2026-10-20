@@ -166,6 +166,10 @@ SOURCE_DEFAULTS: Dict[str, str] = {
     "LWL-Industriemuseum": "Museum & Ausstellung",
     "Messe Essen": "Märkte & Messen",
     "Unperfekthaus": "Workshops & Mitmachen",
+    "Theater Oberhausen": "Theater & Bühne",
+    "Schauspielhaus Bochum": "Theater & Bühne",
+    "Theater an der Ruhr": "Theater & Bühne",
+    "Bergbau-Museum Bochum": "Museum & Ausstellung",
 }
 
 

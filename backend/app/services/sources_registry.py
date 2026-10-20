@@ -32,6 +32,11 @@ from app.services.ruhrbuehnen import sync_ruhrbuehnen
 from app.services.planetarium_bochum import sync_planetarium_bochum
 from app.services.katakomben import sync_katakomben
 from app.services.weststadthalle import sync_weststadthalle
+from app.services.muelheim import sync_muelheim
+from app.services.theater_oberhausen import sync_theater_oberhausen
+from app.services.schauspielhaus_bochum import sync_schauspielhaus_bochum
+from app.services.theater_an_der_ruhr import sync_theater_an_der_ruhr
+from app.services.bergbaumuseum import sync_bergbaumuseum
 
 
 SyncFn = Callable[[Session], Awaitable[int]]
@@ -82,6 +87,13 @@ SOURCES: list[SourceEntry] = [
     SourceEntry("Planetarium Bochum", sync_planetarium_bochum, "https://planetarium-bochum.de/de_DE/event.json", "api"),
     SourceEntry("Katakomben-Theater", sync_katakomben, "http://www.katakomben-theater.de/", "html"),
     SourceEntry("Weststadthalle", sync_weststadthalle, "https://www.weststadthalle.de/veranstaltungen/", "html"),
+    # Added 2026-10-21 after the source research (docs/quellen-evaluationsmatrix.html).
+    # Mülheim honours robots.txt "Crawl-delay: 10" and takes ~6 min per run.
+    SourceEntry("Stadt Mülheim", sync_muelheim, "https://www1.muelheim-ruhr.de/veranstaltungen", "html"),
+    SourceEntry("Theater Oberhausen", sync_theater_oberhausen, "https://theater-oberhausen.de/programm/spielplan/", "html"),
+    SourceEntry("Schauspielhaus Bochum", sync_schauspielhaus_bochum, "https://www.schauspielhausbochum.de/de/spielplan/13/schauspiel", "html"),
+    SourceEntry("Theater an der Ruhr", sync_theater_an_der_ruhr, "https://www.theateranderruhr.de/de/kalender/spielplan", "html"),
+    SourceEntry("Bergbau-Museum Bochum", sync_bergbaumuseum, "https://www.bergbaumuseum.de/besuch/veranstaltungskalender", "html"),
 ]
 
 
