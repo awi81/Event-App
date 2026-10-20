@@ -318,3 +318,41 @@ def test_fetch_never_raises(monkeypatch):
 
     _patch_client(monkeypatch, boom)
     assert asyncio.run(muelheim.fetch_muelheim_events()) == []
+
+
+def test_venue_cache_carries_venues_into_next_run(monkeypatch, tmp_path):
+    soon = datetime.now() + muelheim.timedelta(days=2)
+    page = _page([_row(1, soon.strftime("%d.%m"), "19:00", "Test", "test", 1)]).replace(
+        "2031", str(soon.year)
+    )
+
+    def handler(url):
+        if "/veranstaltungen/test_am" in url:
+            return _FakeResp(200, DETAIL_HTML)
+        return _FakeResp(200, page)
+
+    cache_file = tmp_path / "muelheim_venues.json"
+    monkeypatch.setattr(muelheim, "VENUE_CACHE_FILE", cache_file)
+    calls, _ = _patch_client(monkeypatch, handler)
+
+    first = asyncio.run(muelheim.fetch_muelheim_events())
+    assert any("/veranstaltungen/test_am" in c for c in calls)
+    assert cache_file.exists()
+
+    calls.clear()
+    second = asyncio.run(muelheim.fetch_muelheim_events())
+    assert not any("/veranstaltungen/test_am" in c for c in calls)  # Detail kommt aus dem Cache
+    assert first[0]["venue_name"] == second[0]["venue_name"] == "DAS KAFF – bagel Bar & coffee salon"
+
+
+def test_venue_cache_drops_expired_entries(tmp_path):
+    f = tmp_path / "c.json"
+    muelheim.save_venue_cache(
+        f,
+        {
+            "/neu": {"venue_name": "A", "fetched": "2031-10-01"},
+            "/alt": {"venue_name": "B", "fetched": "2030-01-01"},
+        },
+    )
+    assert set(muelheim.load_venue_cache(f, NOW)) == {"/neu"}
+    assert muelheim.load_venue_cache(None, NOW) == {}

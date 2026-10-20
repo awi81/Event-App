@@ -51,6 +51,9 @@ logger = logging.getLogger("export_snapshot")
 # Committed next to events.json so the fresh Actions DB inherits last run's
 # venue coordinates (see geocode_cache.export_cache).
 GEOCODE_CACHE_FILE = "geocode_cache.json"
+# Same idea for the Mülheim source: series -> venue, so its 10 detail pages per
+# run (robots.txt Crawl-delay 10 s) go to series it has not seen yet.
+MUELHEIM_VENUE_FILE = "muelheim_venues.json"
 
 
 def _import_geocode_cache(db, path: Path) -> int:
@@ -202,6 +205,9 @@ async def export_snapshot(
             # The crawler's DB is fresh every run — warm the geocode cache from
             # the previous snapshot so the Nominatim budget goes to new venues.
             _import_geocode_cache(db, Path(out_dir) / GEOCODE_CACHE_FILE)
+            from app.services import muelheim
+
+            muelheim.VENUE_CACHE_FILE = Path(out_dir) / MUELHEIM_VENUE_FILE
             logger.info("Running full sync%s ...", f" ({', '.join(only_sources)})" if only_sources else "")
             summary = await run_full_sync(db, only_sources=only_sources)
             logger.info("Sync totals: %s", summary.get("totals"))

@@ -32,6 +32,11 @@ Request-Budget je Lauf (Crawl-delay 10 s => Laufzeit ~ MAX_TOTAL_REQUESTS * 10 s
     meisten Terminen zuerst, max. 10; Spielstätte wird auf alle Termine der
     Serie übertragen. Termine ohne Detailseite haben venue_name None, die
     Pipeline geokodiert nur, was sie hat.
+  - Spielstätten-Cache (VENUE_CACHE_FILE, vom Snapshot-Export gesetzt, liegt
+    neben events.json): bereits bekannte Serien bekommen ihre Spielstätte aus
+    dem Cache, das Detail-Budget geht nur an neue Serien. So wächst die
+    Abdeckung von Lauf zu Lauf, ohne mehr Requests. Einträge verfallen nach
+    VENUE_CACHE_TTL_DAYS.
   - Gesamt <= 26 Requests (~6 Minuten inkl. Antwortzeit; 32 Requests brauchten live 7,3 Minuten).
 Ausstellungen (Rubrik "Ausstellung") erscheinen täglich als eigene Zeile und
 werden je Serie zu EINER Zeile mit end_at zusammengefasst.
@@ -44,6 +49,7 @@ import logging
 import re
 from collections import deque
 from datetime import date, datetime, time, timedelta
+from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import urljoin
 from zoneinfo import ZoneInfo
@@ -68,6 +74,12 @@ CRAWL_DELAY = 10  # Sekunden, robots.txt "Crawl-delay: 10"
 MAX_LIST_REQUESTS = 16
 MAX_DETAIL_REQUESTS = 10
 MAX_TOTAL_REQUESTS = 26
+
+# Serie -> Spielstätte, über Läufe hinweg (Actions-DB ist jedes Mal frisch).
+# None = kein Cache (Tests, lokaler Sync); export_snapshot setzt den Pfad.
+VENUE_CACHE_FILE: Optional[Path] = None
+VENUE_CACHE_TTL_DAYS = 180
+_CACHED_FIELDS = ("venue_name", "address_text", "postal", "lat", "lon", "image_url")
 
 _BERLIN = ZoneInfo("Europe/Berlin")
 _HEADERS = {"User-Agent": CRAWLER_USER_AGENT}
@@ -414,12 +426,48 @@ def parse_muelheim_html(
     return build_events(_parse_rows(html, category), None, now)
 
 
-def _pick_detail_targets(rows: List[Dict], limit: int, now: datetime) -> List[Dict]:
-    """Je Serie eine Detailseite: Serien mit den meisten Terminen zuerst."""
+def load_venue_cache(path: Optional[Path], now: datetime) -> Dict[str, Dict]:
+    """Spielstätten-Cache lesen; abgelaufene oder kaputte Einträge fallen weg."""
+    if path is None or not path.exists():
+        return {}
+    try:
+        entries = json.loads(path.read_text(encoding="utf-8")).get("entries", {})
+    except (OSError, ValueError) as exc:
+        logger.warning(f"Mülheim: Spielstätten-Cache unlesbar ({exc})")
+        return {}
+    oldest = (now - timedelta(days=VENUE_CACHE_TTL_DAYS)).date().isoformat()
+    return {
+        series: e for series, e in entries.items()
+        if isinstance(e, dict) and e.get("venue_name") and e.get("fetched", "") >= oldest
+    }
+
+
+def save_venue_cache(path: Optional[Path], cache: Dict[str, Dict]) -> None:
+    if path is None:
+        return
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps({"entries": dict(sorted(cache.items()))}, ensure_ascii=False, indent=1),
+            encoding="utf-8",
+        )
+    except OSError as exc:
+        logger.warning(f"Mülheim: Spielstätten-Cache nicht geschrieben ({exc})")
+
+
+def _pick_detail_targets(
+    rows: List[Dict], limit: int, now: datetime, known: frozenset = frozenset()
+) -> List[Dict]:
+    """Je Serie eine Detailseite: Serien mit den meisten Terminen zuerst.
+
+    Serien aus `known` (schon im Spielstätten-Cache) werden übersprungen.
+    """
     window_start = datetime.combine(now.date(), time(0, 0))
     window_end = window_start + timedelta(days=MAX_DAYS_AHEAD)
     by_series: Dict[str, List[Dict]] = {}
     for r in rows:
+        if r["series"] in known:
+            continue
         if window_start <= r["start"] < window_end:
             by_series.setdefault(r["series"], []).append(r)
     ranked = sorted(
@@ -436,7 +484,10 @@ async def fetch_muelheim_events() -> List[Dict]:
     requests_made = 0
     blocked = False
     rows: List[Dict] = []
-    details: Dict[str, Dict] = {}
+    cache = load_venue_cache(VENUE_CACHE_FILE, now)
+    # Aus dem Cache nur Ort und Bild; start/end gehören zum damals geholten Termin.
+    details: Dict[str, Dict] = {s: dict(e) for s, e in cache.items()}
+    fresh = 0
 
     async def get(client: httpx.AsyncClient, url: str) -> Optional[str]:
         """GET mit Crawl-delay vor jedem Request außer dem ersten."""
@@ -482,7 +533,8 @@ async def fetch_muelheim_events() -> List[Dict]:
                     queue.append((label, nxt))
 
             budget = min(MAX_DETAIL_REQUESTS, MAX_TOTAL_REQUESTS - requests_made)
-            for target in _pick_detail_targets(rows, max(budget, 0), now):
+            targets = _pick_detail_targets(rows, max(budget, 0), now, frozenset(cache))
+            for target in targets:
                 text = await get(client, target["url"])
                 if text is None:
                     if blocked:
@@ -491,10 +543,19 @@ async def fetch_muelheim_events() -> List[Dict]:
                 parsed = _parse_detail(text)
                 if parsed and parsed.get("venue_name"):
                     details[target["series"]] = parsed
+                    cache[target["series"]] = {
+                        **{k: parsed.get(k) for k in _CACHED_FIELDS},
+                        "fetched": now.date().isoformat(),
+                    }
+                    fresh += 1
     except Exception as exc:
         logger.error(f"Mülheim fetch failed: {exc}")
 
-    logger.info(f"Mülheim: {requests_made} requests, {len(details)} Detailseiten")
+    save_venue_cache(VENUE_CACHE_FILE, cache)
+    logger.info(
+        f"Mülheim: {requests_made} requests, {fresh} neue Detailseiten, "
+        f"{len(cache)} Serien im Spielstätten-Cache"
+    )
     try:
         return build_events(rows, details, now)
     except Exception as exc:
