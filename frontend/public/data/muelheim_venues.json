@@ -18,6 +18,15 @@
    "image_url": "https://img.culturebase.org/5/1/d/8/f/pic_1791975428_51d8f634401830068946a9319d2e9d1a_t0.jpeg",
    "fetched": "2026-10-21"
   },
+  "/veranstaltungen/der_gott_des_gemetzels": {
+   "venue_name": "Alte Villa",
+   "address_text": "Schulstraße 10, 45468 Mülheim an der Ruhr",
+   "postal": "45468",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/b/b/e/7/1/pic_1778427348_bbe719a11c7733c19bb26b3a62da554b_t0.jpeg",
+   "fetched": "2026-10-21"
+  },
   "/veranstaltungen/faszination_schach_im_rhein-ruhr_zentrum": {
    "venue_name": "Rhein-Ruhr Zentrum Mülheim (RRZ)",
    "address_text": "Humboldtring 13, 45472 Mülheim an der Ruhr",
@@ -45,6 +54,15 @@
    "image_url": "https://img.culturebase.org/0/6/6/8/a/pic_1787226113_0668adcaec7eda865c5c329d73ded4e1_t0.jpeg",
    "fetched": "2026-10-21"
   },
+  "/veranstaltungen/gute_nacht": {
+   "venue_name": "Kunstmuseum Mülheim an der Ruhr",
+   "address_text": "Synagogenplatz 1, 45468 Mülheim an der Ruhr",
+   "postal": "45468",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/a/a/0/e/0/pic_1782986311_aa0e024c39edbf3f8db40b61cf73f839_t0.jpeg",
+   "fetched": "2026-10-21"
+  },
   "/veranstaltungen/im_garten_der_kunst_marc_macke_heckel_jawlensky._die_sammlung_karl_und_maria_ziegler_teil_2": {
    "venue_name": "Kunstmuseum Mülheim an der Ruhr",
    "address_text": "Synagogenplatz 1, 45468 Mülheim an der Ruhr",
@@ -63,6 +81,33 @@
    "image_url": "https://img.culturebase.org/5/d/8/1/f/pic_1780397840_5d81fc3bb05dddecc09748af255dfd74_t0.jpeg",
    "fetched": "2026-10-21"
   },
+  "/veranstaltungen/lenz_-_jahrmarkt_der_verlorenen": {
+   "venue_name": "Theater an der Ruhr",
+   "address_text": "Akazienallee 61, 45478 Mülheim an der Ruhr",
+   "postal": "45478",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/0/e/f/b/3/ec_0efb31640b209e855997c90d9eb16240_t0.png",
+   "fetched": "2026-10-21"
+  },
+  "/veranstaltungen/lesefoerderung_lesezwerge": {
+   "venue_name": "Buchhandlung Bücherträume",
+   "address_text": "Prinzess-Luise-Str.9, 45479 Mülheim an der Ruhr",
+   "postal": "45479",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/0/3/2/9/f/pic_1754430801_0329f0b0f1e385714362a1f3a903c896_t0.jpeg",
+   "fetched": "2026-10-21"
+  },
+  "/veranstaltungen/neuland_in_sicht": {
+   "venue_name": "Kunstmuseum Mülheim an der Ruhr",
+   "address_text": "Synagogenplatz 1, 45468 Mülheim an der Ruhr",
+   "postal": "45468",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/6/a/b/8/5/pic_1790766853_6ab85933ce914f37b6a2c779355f5245_t0.jpeg",
+   "fetched": "2026-10-21"
+  },
   "/veranstaltungen/praesentation_des_mittelalterlichen_koeln_in_der_stadt_muelheim_-_kunstmuseum_mmkm_ruhrstrasse_3_-_ecke_delle_im_innenstadtpark_ruhranlage": {
    "venue_name": "MMKM Museum Moderne Kunst Mülheim",
    "address_text": "Ruhrstr. 3, Ecke Delle - Ruhranlage, 45468 Mülheim an der Ruhr",
@@ -72,6 +117,33 @@
    "image_url": "https://img.culturebase.org/2/7/7/9/6/pic_1786514494_27796f10dc1cdd5046a63ccd76eafae7_t0.png",
    "fetched": "2026-10-21"
   },
+  "/veranstaltungen/sylvester_eisenstein_und_hoffnungsstern_-_erinnerungen_an_den_muelheimer_bergbau": {
+   "venue_name": "Stadtarchiv im Haus der Stadtgeschichte",
+   "address_text": "Von-Graefe-Straße 37, 45470 Mülheim an der Ruhr",
+   "postal": "45470",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/3/6/f/7/2/pic_1782457070_36f72e440cf122b3306d8c543053dce0_t0.jpeg",
+   "fetched": "2026-10-21"
+  },
+  "/veranstaltungen/theater_trifft_escape_room": {
+   "venue_name": "Theater an der Ruhr",
+   "address_text": "Akazienallee 61, 45478 Mülheim an der Ruhr",
+   "postal": "45478",
+   "lat": null,
+   "lon": null,
+   "image_url": "",
+   "fetched": "2026-10-21"
+  },
+  "/veranstaltungen/tomas_kleiner._im_wind": {
+   "venue_name": "Kunstmuseum Mülheim an der Ruhr",
+   "address_text": "Synagogenplatz 1, 45468 Mülheim an der Ruhr",
+   "postal": "45468",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/8/1/9/2/7/pic_1790766086_81927b4fb8c28a042528ec91d042f96d_t0.jpeg",
+   "fetched": "2026-10-21"
+  },
   "/veranstaltungen/unsere_besten_-_ausstellung_der_kuenstlergruppe_kunstfeld": {
    "venue_name": "Versammlungsraum Begegnungsstätte Kloster Saarn",
    "address_text": "Klosterstraße 53, 45481 Mülheim an der Ruhr",
@@ -79,6 +151,24 @@
    "lat": null,
    "lon": null,
    "image_url": "https://img.culturebase.org/3/3/9/5/e/pic_1790679749_3395e5008f8a5fcb91e8564542addebe_t0.jpeg",
+   "fetched": "2026-10-21"
+  },
+  "/veranstaltungen/utopie_2._liebe_glaube_hoffnung_sammlung": {
+   "venue_name": "Kunstmuseum Mülheim an der Ruhr",
+   "address_text": "Synagogenplatz 1, 45468 Mülheim an der Ruhr",
+   "postal": "45468",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/2/7/c/4/7/pic_1773840853_27c475ad390f0fac96ee13a331af5877_t0.jpeg",
+   "fetched": "2026-10-21"
+  },
+  "/veranstaltungen/when_blue_comes_around_it_stays_around": {
+   "venue_name": "Kunstmuseum Mülheim an der Ruhr",
+   "address_text": "Synagogenplatz 1, 45468 Mülheim an der Ruhr",
+   "postal": "45468",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/8/e/c/e/2/pic_1780485841_8ece2c4f86c4194405ace93f851a292f_t0.jpeg",
    "fetched": "2026-10-21"
   },
   "/veranstaltungen/wir_lesen_eine_geschichte": {
