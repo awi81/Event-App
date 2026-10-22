@@ -1,5 +1,14 @@
 {
  "entries": {
+  "/veranstaltungen/alte_liebe": {
+   "venue_name": "Rio Filmtheater",
+   "address_text": "Synagogenplatz 3, 45468 Mülheim an der Ruhr",
+   "postal": "45468",
+   "lat": null,
+   "lon": null,
+   "image_url": "",
+   "fetched": "2026-10-22"
+  },
   "/veranstaltungen/arian_irsula_zeigt_materia_pott_-_der_andere_blick_auf_das_ruhrgebiet": {
    "venue_name": "MMKM Museum Moderne Kunst Mülheim",
    "address_text": "Ruhrstraße 3, 45468 Mülheim an der Ruhr",
@@ -18,6 +27,24 @@
    "image_url": "https://img.culturebase.org/5/1/d/8/f/pic_1791975428_51d8f634401830068946a9319d2e9d1a_t0.jpeg",
    "fetched": "2026-10-21"
   },
+  "/veranstaltungen/checker_tobi_3_-_die_heimliche_herrscherin_der_erde": {
+   "venue_name": "Rio Filmtheater",
+   "address_text": "Synagogenplatz 3, 45468 Mülheim an der Ruhr",
+   "postal": "45468",
+   "lat": null,
+   "lon": null,
+   "image_url": "",
+   "fetched": "2026-10-22"
+  },
+  "/veranstaltungen/conni_kommt_-_weihnachtlich": {
+   "venue_name": "WodoStudio im Ringlokschuppen Mülheim RUHR",
+   "address_text": "Am Schloss Broich 38, 45479 Mülheim an der Ruhr",
+   "postal": "45479",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/b/e/8/a/0/pic_1736351595_be8a0f984bebc1fee16b8cefa4d459b6_t0.jpeg",
+   "fetched": "2026-10-22"
+  },
   "/veranstaltungen/der_gott_des_gemetzels": {
    "venue_name": "Alte Villa",
    "address_text": "Schulstraße 10, 45468 Mülheim an der Ruhr",
@@ -26,6 +53,24 @@
    "lon": null,
    "image_url": "https://img.culturebase.org/b/b/e/7/1/pic_1778427348_bbe719a11c7733c19bb26b3a62da554b_t0.jpeg",
    "fetched": "2026-10-21"
+  },
+  "/veranstaltungen/die_nashoerner_rhinoceros": {
+   "venue_name": "Ruhrorter Straße 108",
+   "address_text": null,
+   "postal": null,
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/9/6/4/8/2/ec_96482d6a6b383f8a7f56e6f97329eec2_t0.png",
+   "fetched": "2026-10-22"
+  },
+  "/veranstaltungen/die_neugierige_kleine_hexe_lisbet": {
+   "venue_name": "WodoStudio im Ringlokschuppen Mülheim RUHR",
+   "address_text": "Am Schloss Broich 38, 45479 Mülheim an der Ruhr",
+   "postal": "45479",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/a/8/b/0/6/pic_1791972075_a8b06381e837fb004be5f9a31b6fcd33_t0.jpeg",
+   "fetched": "2026-10-22"
   },
   "/veranstaltungen/faszination_schach_im_rhein-ruhr_zentrum": {
    "venue_name": "Rhein-Ruhr Zentrum Mülheim (RRZ)",
@@ -63,6 +108,15 @@
    "image_url": "https://img.culturebase.org/a/a/0/e/0/pic_1782986311_aa0e024c39edbf3f8db40b61cf73f839_t0.jpeg",
    "fetched": "2026-10-21"
   },
+  "/veranstaltungen/heimsuchung_-_eine_jahrhundertgeschichte": {
+   "venue_name": "Rio Filmtheater",
+   "address_text": "Synagogenplatz 3, 45468 Mülheim an der Ruhr",
+   "postal": "45468",
+   "lat": null,
+   "lon": null,
+   "image_url": "",
+   "fetched": "2026-10-22"
+  },
   "/veranstaltungen/im_garten_der_kunst_marc_macke_heckel_jawlensky._die_sammlung_karl_und_maria_ziegler_teil_2": {
    "venue_name": "Kunstmuseum Mülheim an der Ruhr",
    "address_text": "Synagogenplatz 1, 45468 Mülheim an der Ruhr",
@@ -71,6 +125,15 @@
    "lon": null,
    "image_url": "https://img.culturebase.org/7/f/8/0/0/pic_1767607094_7f8004211278247c646230ca2dbf31ad_t0.jpeg",
    "fetched": "2026-10-21"
+  },
+  "/veranstaltungen/im_stile_von..._eine_fotografische_gruppenausstellung_unter_der_leitung_von_ruhrpreistraeger_ralf_rassloff_villa_artis_-_eroeffnung_so._18.10.26_um_14_uhr_-_austellung_danach_bis_8.11.2026": {
+   "venue_name": "Galerie an der Ruhr / Ruhr Gallery",
+   "address_text": "Ruhrstraße 3, 45468 Mülheim an der Ruhr",
+   "postal": "45468",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/d/c/0/8/a/pic_1791816438_dc08a2332454d9e4c8adc9c362455fe1_t0.jpeg",
+   "fetched": "2026-10-22"
   },
   "/veranstaltungen/instrumente_der_musikgeschichte_mit_ralf_schreiber_esther_rosiny-wieland_herbstferienworkshop_fuer_10-14-jaehrige": {
    "venue_name": "Ringlokschuppen Ruhr",
@@ -99,6 +162,15 @@
    "image_url": "https://img.culturebase.org/0/3/2/9/f/pic_1754430801_0329f0b0f1e385714362a1f3a903c896_t0.jpeg",
    "fetched": "2026-10-21"
   },
+  "/veranstaltungen/lesestart_speldorf": {
+   "venue_name": "Schul- und Stadtteilbibliothek Speldorf",
+   "address_text": "Frühlingstr. 35, 45478 Mülheim an der Ruhr",
+   "postal": "45478",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/a/2/a/7/a/pic_1754371979_a2a7a93470f964b10a22710140df3c70_t0.png",
+   "fetched": "2026-10-22"
+  },
   "/veranstaltungen/neuland_in_sicht": {
    "venue_name": "Kunstmuseum Mülheim an der Ruhr",
    "address_text": "Synagogenplatz 1, 45468 Mülheim an der Ruhr",
@@ -116,6 +188,24 @@
    "lon": null,
    "image_url": "https://img.culturebase.org/2/7/7/9/6/pic_1786514494_27796f10dc1cdd5046a63ccd76eafae7_t0.png",
    "fetched": "2026-10-21"
+  },
+  "/veranstaltungen/queerer_buchclub": {
+   "venue_name": "Buchhandlung Bücherträume",
+   "address_text": "Prinzess-Luise-Str.9, 45479 Mülheim an der Ruhr",
+   "postal": "45479",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/1/1/0/b/2/pic_1782503965_110b2a90b4b60136b642ab6c2d18c114_t0.jpeg",
+   "fetched": "2026-10-22"
+  },
+  "/veranstaltungen/rage_-_eine_wuterfahrung_ua": {
+   "venue_name": "Theater an der Ruhr",
+   "address_text": "Akazienallee 61, 45478 Mülheim an der Ruhr",
+   "postal": "45478",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/7/4/b/6/9/ec_74b696934eb0036ab47a4228b52079ca_t0.png",
+   "fetched": "2026-10-22"
   },
   "/veranstaltungen/sylvester_eisenstein_und_hoffnungsstern_-_erinnerungen_an_den_muelheimer_bergbau": {
    "venue_name": "Stadtarchiv im Haus der Stadtgeschichte",
