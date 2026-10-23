@@ -72,6 +72,15 @@
    "image_url": "https://img.culturebase.org/a/8/b/0/6/pic_1791972075_a8b06381e837fb004be5f9a31b6fcd33_t0.jpeg",
    "fetched": "2026-10-22"
   },
+  "/veranstaltungen/elternkino": {
+   "venue_name": "Schul- und Stadtteilbibliothek Heißen",
+   "address_text": "Schulzentrum Kleiststr. 50, 45472 Mülheim an der Ruhr",
+   "postal": "45472",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/8/3/5/d/8/pic_1788256328_835d8129704ecfa09a7944a3ec2edc3a_t0.png",
+   "fetched": "2026-10-23"
+  },
   "/veranstaltungen/faszination_schach_im_rhein-ruhr_zentrum": {
    "venue_name": "Rhein-Ruhr Zentrum Mülheim (RRZ)",
    "address_text": "Humboldtring 13, 45472 Mülheim an der Ruhr",
@@ -180,6 +189,15 @@
    "image_url": "https://img.culturebase.org/6/a/b/8/5/pic_1790766853_6ab85933ce914f37b6a2c779355f5245_t0.jpeg",
    "fetched": "2026-10-21"
   },
+  "/veranstaltungen/plaedoyer_fuer_die_unglueckliche_liebe": {
+   "venue_name": "Volxbühne – Ensemble der Generationen am Theater an der Ruhr",
+   "address_text": "Theaterstudio, Adolfstraße 89 a, 45468 Mülheim an der Ruhr",
+   "postal": "45468",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/5/4/5/e/a/ec_545ea5fae964c008f383201520ce400b_t0.png",
+   "fetched": "2026-10-23"
+  },
   "/veranstaltungen/praesentation_des_mittelalterlichen_koeln_in_der_stadt_muelheim_-_kunstmuseum_mmkm_ruhrstrasse_3_-_ecke_delle_im_innenstadtpark_ruhranlage": {
    "venue_name": "MMKM Museum Moderne Kunst Mülheim",
    "address_text": "Ruhrstr. 3, Ecke Delle - Ruhranlage, 45468 Mülheim an der Ruhr",
@@ -188,6 +206,15 @@
    "lon": null,
    "image_url": "https://img.culturebase.org/2/7/7/9/6/pic_1786514494_27796f10dc1cdd5046a63ccd76eafae7_t0.png",
    "fetched": "2026-10-21"
+  },
+  "/veranstaltungen/premierenparty": {
+   "venue_name": "Theater an der Ruhr",
+   "address_text": "Akazienallee 61, 45478 Mülheim an der Ruhr",
+   "postal": "45478",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/7/c/3/5/9/ec_7c359bb83328b692a095a1131e11baa0_t0.png",
+   "fetched": "2026-10-23"
   },
   "/veranstaltungen/queerer_buchclub": {
    "venue_name": "Buchhandlung Bücherträume",
@@ -206,6 +233,15 @@
    "lon": null,
    "image_url": "https://img.culturebase.org/7/4/b/6/9/ec_74b696934eb0036ab47a4228b52079ca_t0.png",
    "fetched": "2026-10-22"
+  },
+  "/veranstaltungen/selberlesen_-_der_buchclub_im_ringlokschuppen_ruhr": {
+   "venue_name": "Ringlokschuppen Ruhr",
+   "address_text": "Am Schloß Broich 38, 45479 Mülheim an der Ruhr",
+   "postal": "45479",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/1/0/0/0/7/pic_1786540402_100075a34226554eee1cdf695015d849_t0.jpeg",
+   "fetched": "2026-10-23"
   },
   "/veranstaltungen/sylvester_eisenstein_und_hoffnungsstern_-_erinnerungen_an_den_muelheimer_bergbau": {
    "venue_name": "Stadtarchiv im Haus der Stadtgeschichte",
@@ -269,6 +305,15 @@
    "lon": null,
    "image_url": "https://img.culturebase.org/3/5/4/1/9/pic_1772113765_35419b87dd241dc097ceefd13ac545db_t0.png",
    "fetched": "2026-10-21"
+  },
+  "/veranstaltungen/zum_henker_mit_den_henks": {
+   "venue_name": "Alte Villa",
+   "address_text": "Schulstraße 10, 45468 Mülheim an der Ruhr",
+   "postal": "45468",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/f/0/d/6/0/pic_1785346424_f0d608357ab2d3d616ad0719e1d01dab_t0.jpeg",
+   "fetched": "2026-10-23"
   }
  }
 }
