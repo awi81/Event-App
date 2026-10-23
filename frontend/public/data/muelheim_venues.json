@@ -126,6 +126,15 @@
    "image_url": "",
    "fetched": "2026-10-22"
   },
+  "/veranstaltungen/herbstferien_im_kunstmuseum_traumwesen_und_zaubergestalten": {
+   "venue_name": "Kunstmuseum Mülheim an der Ruhr",
+   "address_text": "Synagogenplatz 1, 45468 Mülheim an der Ruhr",
+   "postal": "45468",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/c/2/d/6/a/pic_1785236582_c2d6a320abdcf6c2f383d5192731fea7_t0.jpeg",
+   "fetched": "2026-10-23"
+  },
   "/veranstaltungen/im_garten_der_kunst_marc_macke_heckel_jawlensky._die_sammlung_karl_und_maria_ziegler_teil_2": {
    "venue_name": "Kunstmuseum Mülheim an der Ruhr",
    "address_text": "Synagogenplatz 1, 45468 Mülheim an der Ruhr",
