@@ -108,6 +108,15 @@
    "image_url": "https://img.culturebase.org/0/6/6/8/a/pic_1787226113_0668adcaec7eda865c5c329d73ded4e1_t0.jpeg",
    "fetched": "2026-10-21"
   },
+  "/veranstaltungen/goetterfunken": {
+   "venue_name": "Makroscope e.V./ Museum für Fotokopie",
+   "address_text": "Friedrich-Ebert-Str. 48, 45468 Mülheim an der Ruhr",
+   "postal": "45468",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/5/f/a/4/c/pic_1791965459_5fa4c3a4a9aa3276915fad931bd92ca6_t0.jpeg",
+   "fetched": "2026-10-30"
+  },
   "/veranstaltungen/gute_nacht": {
    "venue_name": "Kunstmuseum Mülheim an der Ruhr",
    "address_text": "Synagogenplatz 1, 45468 Mülheim an der Ruhr",
@@ -296,6 +305,15 @@
    "lon": null,
    "image_url": "https://img.culturebase.org/2/7/c/4/7/pic_1773840853_27c475ad390f0fac96ee13a331af5877_t0.jpeg",
    "fetched": "2026-10-21"
+  },
+  "/veranstaltungen/viva_la_gender": {
+   "venue_name": "Hochschule Ruhr West",
+   "address_text": "Duisburger Straße 100",
+   "postal": null,
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/9/d/0/2/6/pic_1791532330_9d02616d55347f5ccd2d0610e0c67353_t0.jpeg",
+   "fetched": "2026-10-30"
   },
   "/veranstaltungen/when_blue_comes_around_it_stays_around": {
    "venue_name": "Kunstmuseum Mülheim an der Ruhr",
