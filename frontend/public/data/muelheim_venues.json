@@ -27,6 +27,15 @@
    "image_url": "https://img.culturebase.org/5/1/d/8/f/pic_1791975428_51d8f634401830068946a9319d2e9d1a_t0.jpeg",
    "fetched": "2026-10-21"
   },
+  "/veranstaltungen/ausstellung_lost_places": {
+   "venue_name": "Stadtbibliothek im MedienHaus",
+   "address_text": "Synagogenplatz 3, 45468 Mülheim an der Ruhr",
+   "postal": "45468",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/a/c/e/9/c/pic_1791281733_ace9ce6276f1947066f89ccff41079b6_t0.png",
+   "fetched": "2026-10-30"
+  },
   "/veranstaltungen/checker_tobi_3_-_die_heimliche_herrscherin_der_erde": {
    "venue_name": "Rio Filmtheater",
    "address_text": "Synagogenplatz 3, 45468 Mülheim an der Ruhr",
