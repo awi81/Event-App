@@ -207,6 +207,15 @@
    "image_url": "https://img.culturebase.org/a/2/a/7/a/pic_1754371979_a2a7a93470f964b10a22710140df3c70_t0.png",
    "fetched": "2026-10-22"
   },
+  "/veranstaltungen/museum_lab_hrw_judith_blodig": {
+   "venue_name": "Kunstmuseum Mülheim an der Ruhr",
+   "address_text": "Synagogenplatz 1, 45468 Mülheim an der Ruhr",
+   "postal": "45468",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/3/0/8/e/9/pic_1792485169_308e9bb851e3c620f6864836bc4382ff_t0.png",
+   "fetched": "2026-11-01"
+  },
   "/veranstaltungen/neuland_in_sicht": {
    "venue_name": "Kunstmuseum Mülheim an der Ruhr",
    "address_text": "Synagogenplatz 1, 45468 Mülheim an der Ruhr",
