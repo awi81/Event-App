@@ -36,6 +36,24 @@
    "image_url": "https://img.culturebase.org/a/c/e/9/c/pic_1791281733_ace9ce6276f1947066f89ccff41079b6_t0.png",
    "fetched": "2026-10-30"
   },
+  "/veranstaltungen/ausstellung_unsere_besten_kunstfeld": {
+   "venue_name": "Begegnungsstätte Feldmann-Stiftung | Saal | Ausstellung",
+   "address_text": "Augustastraße 108-114, 45476 Mülheim an der Ruhr",
+   "postal": "45476",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/b/7/b/0/7/pic_1791976784_b7b07ab5df27c5c2408ce0769cb088b2_t0.jpeg",
+   "fetched": "2026-11-05"
+  },
+  "/veranstaltungen/blood_on_the_clocktower_spielrunde": {
+   "venue_name": "Buchhandlung Bücherträume",
+   "address_text": "Prinzess-Luise-Str.9, 45479 Mülheim an der Ruhr",
+   "postal": "45479",
+   "lat": null,
+   "lon": null,
+   "image_url": "",
+   "fetched": "2026-11-05"
+  },
   "/veranstaltungen/checker_tobi_3_-_die_heimliche_herrscherin_der_erde": {
    "venue_name": "Rio Filmtheater",
    "address_text": "Synagogenplatz 3, 45468 Mülheim an der Ruhr",
@@ -108,6 +126,15 @@
    "image_url": "",
    "fetched": "2026-10-21"
   },
+  "/veranstaltungen/gefluegel-_kaninchen-_und_kleintierschau_mit_oldtimer-traktoren": {
+   "venue_name": "Alte Dreherei",
+   "address_text": "Zur Alten Dreherei 13, 45479 Mülheim an der Ruhr",
+   "postal": "45479",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/0/f/a/e/2/pic_1675446325_0fae212d7806c8be775e9b160e8bb0cc_t0.jpeg",
+   "fetched": "2026-11-05"
+  },
   "/veranstaltungen/gjakmarrje_-_in_the_blood._fotografien_von_birte_kaufmann": {
    "venue_name": "Camera Obscura Mülheim an der Ruhr",
    "address_text": "Am Schloß Broich 42, 45479 Mülheim an der Ruhr",
@@ -134,6 +161,15 @@
    "lon": null,
    "image_url": "https://img.culturebase.org/a/a/0/e/0/pic_1782986311_aa0e024c39edbf3f8db40b61cf73f839_t0.jpeg",
    "fetched": "2026-10-21"
+  },
+  "/veranstaltungen/gute_nacht_-_taschenlampenfuehrung_im_kunstmuseum": {
+   "venue_name": "Kunstmuseum Mülheim an der Ruhr",
+   "address_text": "Synagogenplatz 1, 45468 Mülheim an der Ruhr",
+   "postal": "45468",
+   "lat": null,
+   "lon": null,
+   "image_url": "",
+   "fetched": "2026-11-05"
   },
   "/veranstaltungen/heimsuchung_-_eine_jahrhundertgeschichte": {
    "venue_name": "Rio Filmtheater",
@@ -180,6 +216,15 @@
    "image_url": "https://img.culturebase.org/5/d/8/1/f/pic_1780397840_5d81fc3bb05dddecc09748af255dfd74_t0.jpeg",
    "fetched": "2026-10-21"
   },
+  "/veranstaltungen/kinderworkshop_zum_buch_na_toll_ein_weihnachtstroll": {
+   "venue_name": "Buchhandlung Bücherträume",
+   "address_text": "Prinzess-Luise-Str.9, 45479 Mülheim an der Ruhr",
+   "postal": "45479",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/1/8/8/5/4/pic_1754425827_188544aa424e09b73868206d2fb9e1f0_t0.jpeg",
+   "fetched": "2026-11-05"
+  },
   "/veranstaltungen/lenz_-_jahrmarkt_der_verlorenen": {
    "venue_name": "Theater an der Ruhr",
    "address_text": "Akazienallee 61, 45478 Mülheim an der Ruhr",
@@ -206,6 +251,15 @@
    "lon": null,
    "image_url": "https://img.culturebase.org/a/2/a/7/a/pic_1754371979_a2a7a93470f964b10a22710140df3c70_t0.png",
    "fetched": "2026-10-22"
+  },
+  "/veranstaltungen/machbarschaften_-_der_nachbarschaftstreff_im_ringlokschuppen_ruhr": {
+   "venue_name": "Ringlokschuppen Ruhr",
+   "address_text": "Am Schloß Broich 38, 45479 Mülheim an der Ruhr",
+   "postal": "45479",
+   "lat": null,
+   "lon": null,
+   "image_url": "",
+   "fetched": "2026-11-05"
   },
   "/veranstaltungen/museum_lab_hrw_judith_blodig": {
    "venue_name": "Kunstmuseum Mülheim an der Ruhr",
@@ -269,6 +323,33 @@
    "lon": null,
    "image_url": "https://img.culturebase.org/7/4/b/6/9/ec_74b696934eb0036ab47a4228b52079ca_t0.png",
    "fetched": "2026-10-22"
+  },
+  "/veranstaltungen/repair_cafe_linuxtreff_und_freifunk": {
+   "venue_name": "Stadtbibliothek im MedienHaus | Repair-Café | 3.OG",
+   "address_text": "Synagogenplatz 3, 45468 Mülheim an der Ruhr",
+   "postal": "45468",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/5/2/e/e/e/pic_1790252977_52eee726622c3dbb7f4a007cff613cd8_t0.png",
+   "fetched": "2026-11-05"
+  },
+  "/veranstaltungen/saarner_klosterbuecherei_-_buchausstellung_2026": {
+   "venue_name": "Katholische Öffentliche Bücherei im Kloster Saarn",
+   "address_text": "Klosterstr. 55, 45481 Mülheim an der Ruhr",
+   "postal": "45481",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/a/f/7/d/9/pic_1791380799_af7d991609124c07d230de247090f492_t0.jpeg",
+   "fetched": "2026-11-05"
+  },
+  "/veranstaltungen/saarner_malgruppe_-_aquarell_pastelle_acryllbilder": {
+   "venue_name": "Versammlungsraum Begegnungsstätte Kloster Saarn",
+   "address_text": "Klosterstraße 53, 45481 Mülheim an der Ruhr",
+   "postal": "45481",
+   "lat": null,
+   "lon": null,
+   "image_url": "https://img.culturebase.org/1/9/2/a/2/pic_1793622211_192a2ebfe062b705ed282349d7892cd7_t0.jpeg",
+   "fetched": "2026-11-05"
   },
   "/veranstaltungen/selberlesen_-_der_buchclub_im_ringlokschuppen_ruhr": {
    "venue_name": "Ringlokschuppen Ruhr",
